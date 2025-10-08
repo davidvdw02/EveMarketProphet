@@ -52,6 +52,26 @@ namespace EveMarketProphet.ViewModels
             private set { SetProperty(ref tripView, value); }
         }
 
+        private ObservableCollection<string> fromStationSuggestions = new ObservableCollection<string>();
+        public ObservableCollection<string> FromStationSuggestions
+        {
+            get { return fromStationSuggestions; }
+            private set { SetProperty(ref fromStationSuggestions, value); }
+        }
+
+        private string fromStationQuery;
+        public string FromStationQuery
+        {
+            get { return fromStationQuery; }
+            set
+            {
+                if (SetProperty(ref fromStationQuery, value))
+                {
+                    TripView?.Refresh();
+                }
+            }
+        }
+
         private bool isAvailable;
         public bool IsAvailable
         {
@@ -134,9 +154,41 @@ namespace EveMarketProphet.ViewModels
                 }
             };
 
-            Trips = new ObservableCollection<Trip>(list);
+            ApplyTrips(list);
+        }
+
+        private void ApplyTrips(IEnumerable<Trip> tripList)
+        {
+            var items = tripList ?? Enumerable.Empty<Trip>();
+
+            Trips = new ObservableCollection<Trip>(items);
             TripView = CollectionViewSource.GetDefaultView(Trips);
-            //TripView.Refresh();
+
+            if (TripView != null)
+            {
+                TripView.Filter = TripFilter;
+                TripView.Refresh();
+            }
+
+            UpdateFromStationSuggestions();
+        }
+
+        private void UpdateFromStationSuggestions()
+        {
+            if (Trips == null || Trips.Count == 0)
+            {
+                FromStationSuggestions = new ObservableCollection<string>();
+                return;
+            }
+
+            var stationNames = Trips
+                .Select(t => t.Transactions?.FirstOrDefault()?.SellOrder?.StationName)
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .Distinct(StringComparer.InvariantCultureIgnoreCase)
+                .OrderBy(n => n, StringComparer.InvariantCultureIgnoreCase)
+                .ToList();
+
+            FromStationSuggestions = new ObservableCollection<string>(stationNames);
         }
 
         private void SetupRegionCombobox()
@@ -218,10 +270,7 @@ namespace EveMarketProphet.ViewModels
 
             if (list != null)
             {
-                Trips = new ObservableCollection<Trip>(list);
-                TripView = (CollectionView)CollectionViewSource.GetDefaultView(Trips);
-                //TripView.Filter = new Predicate<object>(x => Trips.IndexOf((Trip)x) < Settings.Default.FilterShowAmount);
-                TripView.Refresh();
+                ApplyTrips(list);
             }
 
             ShowProgressBar = Visibility.Hidden;
@@ -230,10 +279,28 @@ namespace EveMarketProphet.ViewModels
 
         private int FilterSystemStartId { get; set; }
         private int FilterSystemEndId { get; set; }
+        private bool hasSystemFilter;
 
-        private bool FilterSystemPair(object sender)
+        private bool TripFilter(object sender)
         {
-            var trip = sender as Trip;
+            if (sender is not Trip trip)
+                return false;
+
+            if (hasSystemFilter && !MatchesSystemPair(trip))
+                return false;
+
+            if (!string.IsNullOrWhiteSpace(FromStationQuery))
+            {
+                var stationName = trip.Transactions?.FirstOrDefault()?.SellOrder?.StationName;
+                if (string.IsNullOrWhiteSpace(stationName) || stationName.IndexOf(FromStationQuery, StringComparison.InvariantCultureIgnoreCase) < 0)
+                    return false;
+            }
+
+            return true;
+        }
+
+        private bool MatchesSystemPair(Trip trip)
+        {
             var tx = trip.Transactions.First();
 
             if (tx.StartSystemId == FilterSystemStartId && tx.EndSystemId == FilterSystemEndId) return true;
@@ -247,18 +314,24 @@ namespace EveMarketProphet.ViewModels
 
         private void OnClearFilters()
         {
-            TripView.Filter = null;
-            TripView.Refresh();
+            hasSystemFilter = false;
+            FilterSystemStartId = 0;
+            FilterSystemEndId = 0;
+            FromStationQuery = string.Empty;
+
+            TripView?.Refresh();
         }
 
         private void OnFilterResults(object sender)
         {
-            var tx = sender as Transaction;
+            if (sender is not Transaction tx)
+                return;
+
             FilterSystemStartId = tx.StartSystemId;
             FilterSystemEndId = tx.EndSystemId;
+            hasSystemFilter = true;
 
-            TripView.Filter = FilterSystemPair;
-            TripView.Refresh();
+            TripView?.Refresh();
         }
 
         private void OnOpenSettings()

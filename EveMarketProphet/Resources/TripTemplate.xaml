@@ -12,12 +12,12 @@
                 <RowDefinition/>
                 <RowDefinition/>
             </Grid.RowDefinitions>
-            <Border Margin="0" Padding="10" Background="#3f3f3f">
-                <DockPanel Grid.Row="0" Background="#3f3f3f">
+            <Border Margin="0" Padding="14" Background="{StaticResource SurfaceAltColor}" CornerRadius="14">
+                <DockPanel Grid.Row="0">
                     <DockPanel>
                         <StackPanel Orientation="Vertical">
                             <StackPanel Orientation="Horizontal" Grid.ColumnSpan="2">
-                                <Button Content="From" Width="50" BorderThickness="1" Command="{Binding DataContext.SetWaypointsCommand, ElementName=listBoxResults}" CommandParameter="{Binding Transactions[0].SellOrder.SystemId}" Background="#FF333333" Foreground="{StaticResource AccentColor}"></Button>
+                                <Button Content="From" Width="56" BorderThickness="1" Command="{Binding DataContext.SetWaypointsCommand, ElementName=listBoxResults}" CommandParameter="{Binding Transactions[0].SellOrder.SystemId}" Background="{StaticResource SurfaceColor}" Foreground="{StaticResource AccentColor}"/>
                                 <TextBlock x:Name="SellStationName" Text="{Binding Path=Transactions[0].SellOrder.StationName, StringFormat={}{0}}" Foreground="{StaticResource ForegroundColor}" Margin="10,0,0,0"/>
                                 <TextBlock Text="{Binding Path=Transactions[0].SellOrder.StationSecurity,StringFormat={}{0:N1}}" Margin="5,0,0,0" Foreground="{Binding Path=Transactions[0].SellOrder.StationSecurity, Converter={StaticResource SecConverter}}">
                                     <TextBlock.Style>
@@ -33,7 +33,7 @@
                                 </TextBlock>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.ColumnSpan="2">
-                                <Button Content="To" Width="50" BorderThickness="1" Command="{Binding DataContext.SetWaypointsCommand, ElementName=listBoxResults}" CommandParameter="{Binding Transactions[0].BuyOrder.SystemId}" Background="#FF333333" Foreground="{StaticResource AccentColor}"></Button>
+                                <Button Content="To" Width="56" BorderThickness="1" Command="{Binding DataContext.SetWaypointsCommand, ElementName=listBoxResults}" CommandParameter="{Binding Transactions[0].BuyOrder.SystemId}" Background="{StaticResource SurfaceColor}" Foreground="{StaticResource AccentColor}"/>
                                 <TextBlock x:Name="BuyStationName" Text="{Binding Path=Transactions[0].BuyOrder.StationName, StringFormat={}{0}}" Grid.Row="1" Foreground="{StaticResource ForegroundColor}" Margin="10,0,0,0"></TextBlock>
                                 <TextBlock Text="{Binding Path=Transactions[0].BuyOrder.StationSecurity,StringFormat={}{0:N1}}" Margin="5,0,0,0" Foreground="{Binding Path=Transactions[0].BuyOrder.StationSecurity, Converter={StaticResource SecConverter}}">
                                     <TextBlock.Style>
@@ -49,7 +49,7 @@
                                 </TextBlock>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.ColumnSpan="4"  HorizontalAlignment="Left">
-                                <Button Content="Filter" Width="50"  HorizontalAlignment="Left" BorderThickness="1" HorizontalContentAlignment="Center" Command="{Binding DataContext.FilterResultsCommand, ElementName=listBoxResults}" CommandParameter="{Binding Transactions[0]}" Background="#FF333333" Foreground="{StaticResource AccentColor}"></Button>
+                                <Button Content="Filter" Width="72"  HorizontalAlignment="Left" BorderThickness="1" HorizontalContentAlignment="Center" Command="{Binding DataContext.FilterResultsCommand, ElementName=listBoxResults}" CommandParameter="{Binding Transactions[0]}" Background="{StaticResource AccentColor}" Foreground="{StaticResource BackgroundColor}"/>
                                 <ItemsControl Margin="8,0,0,0" ItemsSource="{Binding SecurityWaypoints}" x:Name="WaypointDots">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -121,7 +121,7 @@
                                 <RowDefinition />
                                 <RowDefinition />
                             </Grid.RowDefinitions>
-                            <Button Grid.RowSpan="2" Command="{Binding DataContext.OpenMarketWindowCommand, ElementName=listBoxResults}" CommandParameter="{Binding TypeId}" Background="#FF515151">
+                            <Button Grid.RowSpan="2" Command="{Binding DataContext.OpenMarketWindowCommand, ElementName=listBoxResults}" CommandParameter="{Binding TypeId}" Background="{StaticResource SurfaceColor}">
                                 <Image Width="64" Height="64" Source="{Binding Path=Icon}" ></Image>
                             </Button>
                             <TextBlock Margin="30,0,0,0" Text="{Binding TypeName}" Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" FontWeight="Bold" Foreground="{StaticResource AccentColor}" VerticalAlignment="Center"/>

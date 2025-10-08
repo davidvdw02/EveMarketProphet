@@ -38,6 +38,10 @@ namespace EveMarketProphet.Services
         public List<SolarSystem> SolarSystems { get; private set; }
         public List<SolarSystemJump> SolarSystemJumps { get; private set; }
 
+        public Dictionary<int, Models.Type> TypesById { get; }
+        public Dictionary<long, Station> StationsById { get; }
+        public Dictionary<int, SolarSystem> SolarSystemsById { get; }
+
         private Db()
         {
             using (var context = new SdeContext())
@@ -49,6 +53,10 @@ namespace EveMarketProphet.Services
                 SolarSystems = context.SolarSystems.ToList();
                 SolarSystemJumps = context.SolarSystemJumps.ToList();
             }
+
+            TypesById = Types.ToDictionary(t => t.typeID);
+            StationsById = Stations.ToDictionary(s => s.stationID);
+            SolarSystemsById = SolarSystems.ToDictionary(s => s.solarSystemID);
         }
     }
 
