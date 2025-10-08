@@ -365,6 +365,7 @@
     <Compile Include="Utils\ParallelUtils.cs" />
     <Compile Include="Services\Prophet.cs" />
     <Compile Include="Converters\SecurityColorConverter.cs" />
+    <Compile Include="Converters\StringNullOrEmptyToVisibilityConverter.cs" />
     <Compile Include="Models\Transaction.cs" />
     <Compile Include="Models\Trip.cs" />
     <Compile Include="Utils\SecurityUtils.cs" />

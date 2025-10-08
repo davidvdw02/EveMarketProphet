@@ -283,7 +283,7 @@ namespace EveMarketProphet.ViewModels
 
         private bool TripFilter(object sender)
         {
-            if (sender is not Trip trip)
+            if (!(sender is Trip trip))
                 return false;
 
             if (hasSystemFilter && !MatchesSystemPair(trip))
@@ -324,7 +324,7 @@ namespace EveMarketProphet.ViewModels
 
         private void OnFilterResults(object sender)
         {
-            if (sender is not Transaction tx)
+            if (!(sender is Transaction tx))
                 return;
 
             FilterSystemStartId = tx.StartSystemId;
