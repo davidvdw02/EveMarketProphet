@@ -40,7 +40,37 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Vertical" VerticalAlignment="Center">
+                    <TextBlock Text="EVE Market Prophet" FontSize="20" FontWeight="Bold" Foreground="{StaticResource ForegroundColor}" />
+                    <TextBlock Text="Plan profitable trade routes with up-to-date data" Foreground="#FF9AA3B7" Margin="0,4,0,0" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Command="{Binding OpenSettingsCommand}" ToolTip="Open settings">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" />
+                            <TextBlock Text="Settings" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding OpenDonationCommand}" Margin="12,0,0,0" ToolTip="Support the project">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xEB51;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" />
+                            <TextBlock Text="Donate" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding OpenAboutCommand}" Margin="12,0,0,0" ToolTip="About EVE Market Prophet">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" />
+                            <TextBlock Text="About" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
 
                 <Grid Grid.Row="1" Margin="0,24,0,0">
                     <Grid.ColumnDefinitions>
@@ -126,7 +156,7 @@
 
                             <ComboBox x:Name="regionSelect" Grid.Column="1" Grid.Row="0" ItemsSource="{Binding RegionLists}" SelectedValue="{Binding SelectedRegionList}" SelectedIndex="0" DisplayMemberPath="Label" Margin="16,0,0,0" Width="160" IsReadOnly="True"/>
 
-                            <Button x:Name="findRoutesButton" Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Command="{Binding FindRoutesCommand}" Margin="0,16,0,0" MinWidth="160" Background="{StaticResource AccentColor}" Foreground="{StaticResource BackgroundColor}" >
+                            <Button x:Name="findRoutesButton" Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Command="{Binding FindRoutesCommand}" Margin="0,16,0,0" MinWidth="160" Background="{StaticResource AccentColor}" Foreground="{StaticResource ForegroundColor}">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="&#xE14C;" FontFamily="Segoe UI Symbol" Margin="0,0,8,0" />
                                     <TextBlock Text="Find Routes" />
