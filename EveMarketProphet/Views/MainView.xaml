@@ -35,7 +35,7 @@
     </Window.Resources>
 
     <DockPanel LastChildFill="True" Name="grid">
-        <Border DockPanel.Dock="Top" Background="{StaticResource SurfaceColor}" Padding="16,20,16,12">
+        <Border DockPanel.Dock="Top" Background="{StaticResource SurfaceColor}" Padding="24,24,24,16" BorderBrush="{StaticResource SubtleBorderColor}" BorderThickness="0,0,0,1">
             <Grid IsEnabled="{Binding IsAvailable}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -71,14 +71,107 @@
                     </TextBlock>
                 </Grid>
 
-                <Button x:Name="filterButton" Content="Reset Filters" Command="{Binding ClearFiltersCommand}" Margin="0,0,12,0" MinWidth="110"/>
-                </WrapPanel>
+                <Grid Grid.Row="1" Margin="0,24,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2.5*" />
+                        <ColumnDefinition Width="1.5*" />
+                    </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                <Button x:Name="button" Content="&#xE0A5; Donate" FontFamily="Segoe UI Symbol" Margin="0,0,12,0" MinWidth="100" Command="{Binding OpenDonationCommand}"/>
-                <Button x:Name="settingsButton" Content="&#xE115; Settings" FontFamily="Segoe UI Symbol" Command="{Binding OpenSettingsCommand}" Margin="0,0,12,0" MinWidth="110"/>
-                <Button x:Name="button_Copy" Content="&#xE11B;" Command="{Binding OpenAboutCommand}" FontFamily="Segoe UI Symbol" Width="44"/>
-                </StackPanel>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Route Filters" FontWeight="SemiBold" Foreground="{StaticResource ForegroundColor}" />
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,16,0">
+                                <TextBlock Text="Cargo Space" Foreground="#FF9AA3B7" Margin="0,0,0,4" />
+                                <Grid>
+                                    <TextBox x:Name="textBoxCargospace" ToolTip="Cargo space" Text="{local:SettingsBinding MaxCargo,StringFormat=N0,TargetNullValue=''}" Width="120" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+                                    <TextBlock Text="m³" VerticalAlignment="Center" Margin="0,0,10,0" HorizontalAlignment="Right" Foreground="{StaticResource AccentColor}" FontWeight="SemiBold" />
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Grid.Row="0" Margin="0,0,16,0">
+                                <TextBlock Text="Budget" Foreground="#FF9AA3B7" Margin="0,0,0,4" />
+                                <Grid>
+                                    <TextBox x:Name="textBoxISK" Text="{local:SettingsBinding Capital,StringFormat=N0,TargetNullValue=''}" Width="140" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
+                                    <TextBlock Text="ISK" VerticalAlignment="Center" Margin="0,0,10,0" HorizontalAlignment="Right" Foreground="{StaticResource AccentColor}" FontWeight="SemiBold" />
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Grid.Row="0" Margin="0,0,16,0" VerticalAlignment="Stretch">
+                                <TextBlock Text="Security" Foreground="#FF9AA3B7" Margin="0,0,0,4" />
+                                <CheckBox x:Name="checkBox" Content="High Sec" IsChecked="{local:SettingsBinding IsHighSec}" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="1" Margin="0,16,0,0">
+                                <TextBlock Text="From Station" Foreground="#FF9AA3B7" Margin="0,0,0,4" />
+                                <Grid>
+                                    <ComboBox x:Name="fromStationSearch"
+                                              ItemsSource="{Binding FromStationSuggestions}"
+                                              Text="{Binding FromStationQuery, UpdateSourceTrigger=PropertyChanged}"
+                                              IsEditable="True"
+                                              IsTextSearchEnabled="True"
+                                              StaysOpenOnEdit="True"
+                                              HorizontalContentAlignment="Stretch"
+                                              MinDropDownWidth="220"/>
+                                    <TextBlock Text="Search from station..." Margin="12,0,0,0" VerticalAlignment="Center" Foreground="#FF596279" IsHitTestVisible="False">
+                                        <TextBlock.Visibility>
+                                            <Binding Path="FromStationQuery" Converter="{StaticResource EmptyStringToVisibility}"/>
+                                        </TextBlock.Visibility>
+                                    </TextBlock>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Margin="24,0,0,0">
+                        <TextBlock Text="Data &amp; Search" FontWeight="SemiBold" Foreground="{StaticResource ForegroundColor}" />
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Button x:Name="fetchDataButton" Grid.Column="0" Grid.Row="0" Command="{Binding FetchDataCommand}" MinWidth="130">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE118;" FontFamily="Segoe UI Symbol" Margin="0,0,8,0" />
+                                    <TextBlock Text="Fetch Data" />
+                                </StackPanel>
+                            </Button>
+
+                            <ComboBox x:Name="regionSelect" Grid.Column="1" Grid.Row="0" ItemsSource="{Binding RegionLists}" SelectedValue="{Binding SelectedRegionList}" SelectedIndex="0" DisplayMemberPath="Label" Margin="16,0,0,0" Width="160" IsReadOnly="True"/>
+
+                            <Button x:Name="findRoutesButton" Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Command="{Binding FindRoutesCommand}" Margin="0,16,0,0" MinWidth="160" Background="{StaticResource AccentColor}" Foreground="{StaticResource BackgroundColor}" >
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE14C;" FontFamily="Segoe UI Symbol" Margin="0,0,8,0" />
+                                    <TextBlock Text="Find Routes" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button x:Name="filterButton" Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" Command="{Binding ClearFiltersCommand}" Margin="0,12,0,0" MinWidth="160">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE117;" FontFamily="Segoe UI Symbol" Margin="0,0,8,0" />
+                                    <TextBlock Text="Reset Filters" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+
+                </Grid>
             </Grid>
         </Border>
 
@@ -113,7 +206,22 @@
             </StatusBar>
         </Border>
 
-        <ListView x:Name="listBoxResults" Grid.IsSharedSizeScope="True" ItemsSource="{Binding TripView, Mode=OneWay}" ItemTemplate="{StaticResource TripTemplate}" HorizontalContentAlignment="Stretch" ScrollViewer.CanContentScroll="False" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Background="Transparent" BorderThickness="0" Margin="24" Padding="0">
+        <ListView x:Name="listBoxResults"
+                  Grid.IsSharedSizeScope="True"
+                  ItemsSource="{Binding TripView, Mode=OneWay}"
+                  ItemTemplate="{StaticResource TripTemplate}"
+                  HorizontalContentAlignment="Stretch"
+                  ScrollViewer.CanContentScroll="False"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                  Background="Transparent"
+                  BorderThickness="0"
+                  Margin="32"
+                  Padding="0">
+            <ListView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Vertical" />
+                </ItemsPanelTemplate>
+            </ListView.ItemsPanel>
         </ListView>
 
     </DockPanel>

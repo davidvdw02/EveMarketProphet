@@ -6,167 +6,227 @@
     <converters:SecurityColorConverter x:Key="SecConverter"/>
     
     <DataTemplate x:Key="TripTemplate">
-        <!--<Border x:Name="border" BorderThickness="0" BorderBrush="#7FF00000">-->
-        <Grid x:Name="ContainerGrid">
-            <Grid.RowDefinitions>
-                <RowDefinition/>
-                <RowDefinition/>
-            </Grid.RowDefinitions>
-            <Border Margin="0" Padding="14" Background="{StaticResource SurfaceAltColor}" CornerRadius="14">
-                <DockPanel Grid.Row="0">
-                    <DockPanel>
-                        <StackPanel Orientation="Vertical">
-                            <StackPanel Orientation="Horizontal" Grid.ColumnSpan="2">
-                                <Button Content="From" Width="56" BorderThickness="1" Command="{Binding DataContext.SetWaypointsCommand, ElementName=listBoxResults}" CommandParameter="{Binding Transactions[0].SellOrder.SystemId}" Background="{StaticResource SurfaceColor}" Foreground="{StaticResource AccentColor}"/>
-                                <TextBlock x:Name="SellStationName" Text="{Binding Path=Transactions[0].SellOrder.StationName, StringFormat={}{0}}" Foreground="{StaticResource ForegroundColor}" Margin="10,0,0,0"/>
-                                <TextBlock Text="{Binding Path=Transactions[0].SellOrder.StationSecurity,StringFormat={}{0:N1}}" Margin="5,0,0,0" Foreground="{Binding Path=Transactions[0].SellOrder.StationSecurity, Converter={StaticResource SecConverter}}">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Hidden"></Setter>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding ElementName=SellStationName, Path=IsMouseOver}" Value="True">
-                                                    <Setter Property="Visibility" Value="Visible"></Setter>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.ColumnSpan="2">
-                                <Button Content="To" Width="56" BorderThickness="1" Command="{Binding DataContext.SetWaypointsCommand, ElementName=listBoxResults}" CommandParameter="{Binding Transactions[0].BuyOrder.SystemId}" Background="{StaticResource SurfaceColor}" Foreground="{StaticResource AccentColor}"/>
-                                <TextBlock x:Name="BuyStationName" Text="{Binding Path=Transactions[0].BuyOrder.StationName, StringFormat={}{0}}" Grid.Row="1" Foreground="{StaticResource ForegroundColor}" Margin="10,0,0,0"></TextBlock>
-                                <TextBlock Text="{Binding Path=Transactions[0].BuyOrder.StationSecurity,StringFormat={}{0:N1}}" Margin="5,0,0,0" Foreground="{Binding Path=Transactions[0].BuyOrder.StationSecurity, Converter={StaticResource SecConverter}}">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Hidden"></Setter>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding ElementName=BuyStationName, Path=IsMouseOver}" Value="True">
-                                                    <Setter Property="Visibility" Value="Visible"></Setter>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.ColumnSpan="4"  HorizontalAlignment="Left">
-                                <Button Content="Filter" Width="72"  HorizontalAlignment="Left" BorderThickness="1" HorizontalContentAlignment="Center" Command="{Binding DataContext.FilterResultsCommand, ElementName=listBoxResults}" CommandParameter="{Binding Transactions[0]}" Background="{StaticResource AccentColor}" Foreground="{StaticResource BackgroundColor}"/>
-                                <ItemsControl Margin="8,0,0,0" ItemsSource="{Binding SecurityWaypoints}" x:Name="WaypointDots">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal"></StackPanel>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Width="8" Height="8" Background="{Binding security, Converter={StaticResource SecConverter} }" Margin="2,0,0,0">
-                                                <Border.ToolTip>
-                                                    <ToolTip>
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <TextBlock Text="{Binding solarSystemName}"/>
-                                                            <TextBlock Margin="5,0,0,0" Text="{Binding security,StringFormat={}{0:N1}}" Foreground="{Binding security, Converter={StaticResource SecConverter} }"/>
-                                                        </StackPanel>
-                                                    </ToolTip>
-                                                </Border.ToolTip>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                                <!--<Viewbox Stretch="Uniform" Height="8">-->
-                                <TextBlock Text="{Binding Path=Jumps, StringFormat={}{0} Jumps}" Margin="5,0,0,0" Foreground="{StaticResource ForegroundColor}">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Hidden"></Setter>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding ElementName=WaypointDots, Path=IsMouseOver}" Value="True">
-                                                    <Setter Property="Visibility" Value="Visible"></Setter>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </StackPanel>
+        <Border Margin="0" Padding="20" Background="{StaticResource SurfaceAltColor}" CornerRadius="18" BorderBrush="{StaticResource SubtleBorderColor}" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="18" ShadowDepth="0" Opacity="0.35" Color="#CC000000" />
+            </Border.Effect>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource ForegroundColor}">
+                        <TextBlock.Text>
+                            <MultiBinding StringFormat="{0} → {1}">
+                                <Binding Path="Transactions[0].SellOrder.StationName"/>
+                                <Binding Path="Transactions[0].BuyOrder.StationName"/>
+                            </MultiBinding>
+                        </TextBlock.Text>
+                    </TextBlock>
+                    <Button Grid.Column="1"
+                            Command="{Binding DataContext.FilterResultsCommand, ElementName=listBoxResults}"
+                            CommandParameter="{Binding Transactions[0]}"
+                            Margin="24,0,0,0"
+                            MinWidth="110"
+                            Background="{StaticResource AccentColor}"
+                            Foreground="{StaticResource BackgroundColor}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE16E;" FontFamily="Segoe UI Symbol" Margin="0,0,8,0"/>
+                            <TextBlock Text="Filter Route"/>
                         </StackPanel>
-                    </DockPanel>
-                    <DockPanel DockPanel.Dock="Right" HorizontalAlignment="Right">
-                        <StackPanel Orientation="Vertical">
-                            <TextBlock ToolTip="Profit/Jump" Text="{Binding Path=ProfitPerJump, StringFormat=&#xE149; {0:N0} ISK}" FontFamily="Segoe UI Symbol" Grid.Column="4" FontWeight="Bold" Foreground="{StaticResource AccentColor}"></TextBlock>
-                            <TextBlock ToolTip="Profit" Text="{Binding Path=Profit, StringFormat=&#x1f4b0; {0:N0} ISK}" FontFamily="Segoe UI Symbol" Grid.Column="4" Grid.Row="1" Foreground="{StaticResource ForegroundColor}"></TextBlock>
-                            <TextBlock ToolTip="Cost" Text="{Binding Path=Cost, StringFormat=&#xE13C; {0:N0} ISK}" FontFamily="Segoe UI Symbol" Grid.Row="2" Grid.Column="4" Foreground="{StaticResource ForegroundColor}"></TextBlock>
-                            <TextBlock ToolTip="Weight" Text="{Binding Path=Weight, StringFormat=&#x1f3ec; {0:N2} m3}" FontFamily="Segoe UI Symbol" Grid.Row="2" Grid.Column="4" Foreground="{StaticResource ForegroundColor}"></TextBlock>
+                    </Button>
+                </Grid>
+
+                <Grid Grid.Row="1" Margin="0,20,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid Grid.Column="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Row="0"
+                                Grid.Column="0"
+                                Content="From"
+                                Width="64"
+                                Command="{Binding DataContext.SetWaypointsCommand, ElementName=listBoxResults}"
+                                CommandParameter="{Binding Transactions[0].SellOrder.SystemId}"
+                                Background="{StaticResource SurfaceColor}"
+                                Foreground="{StaticResource AccentColor}"/>
+                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="12,0,0,0">
+                            <TextBlock Text="{Binding Transactions[0].SellOrder.StationName}" Foreground="{StaticResource ForegroundColor}" FontWeight="SemiBold" />
+                            <TextBlock Text="Seller" Foreground="#FF7E879A" FontSize="12"/>
                         </StackPanel>
-                    </DockPanel>
+                        <Border Grid.Row="0"
+                                Grid.Column="2"
+                                Background="{Binding Transactions[0].SellOrder.StationSecurity, Converter={StaticResource SecConverter}}"
+                                Padding="10,4"
+                                CornerRadius="8"
+                                Margin="16,0,0,0"
+                                ToolTip="{Binding Transactions[0].SellOrder.StationSecurity, StringFormat=Security: {0:N1}}">
+                            <TextBlock Text="{Binding Transactions[0].SellOrder.StationSecurity, StringFormat={}{0:N1}}" FontWeight="SemiBold" Foreground="{StaticResource BackgroundColor}" />
+                        </Border>
 
-                </DockPanel>
-            </Border>
+                        <Button Grid.Row="1"
+                                Grid.Column="0"
+                                Content="To"
+                                Width="64"
+                                Command="{Binding DataContext.SetWaypointsCommand, ElementName=listBoxResults}"
+                                CommandParameter="{Binding Transactions[0].BuyOrder.SystemId}"
+                                Margin="0,12,0,0"
+                                Background="{StaticResource SurfaceColor}"
+                                Foreground="{StaticResource AccentColor}"/>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="12,12,0,0">
+                            <TextBlock Text="{Binding Transactions[0].BuyOrder.StationName}" Foreground="{StaticResource ForegroundColor}" FontWeight="SemiBold" />
+                            <TextBlock Text="Buyer" Foreground="#FF7E879A" FontSize="12"/>
+                        </StackPanel>
+                        <Border Grid.Row="1"
+                                Grid.Column="2"
+                                Background="{Binding Transactions[0].BuyOrder.StationSecurity, Converter={StaticResource SecConverter}}"
+                                Padding="10,4"
+                                CornerRadius="8"
+                                Margin="16,12,0,0"
+                                ToolTip="{Binding Transactions[0].BuyOrder.StationSecurity, StringFormat=Security: {0:N1}}">
+                            <TextBlock Text="{Binding Transactions[0].BuyOrder.StationSecurity, StringFormat={}{0:N1}}" FontWeight="SemiBold" Foreground="{StaticResource BackgroundColor}" />
+                        </Border>
+                    </Grid>
 
-            <ItemsControl Grid.Row="1" Margin="0,0,0,40" x:Name="listBoxTransactions" ItemsSource="{Binding Transactions}" Background="Transparent" BorderThickness="0" BorderBrush="{DynamicResource AccentColor}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel IsItemsHost="True" ></WrapPanel>
-                        <!-- Width="{Binding ElementName=listBoxTransactions, Path=ActualWidth, Mode=OneWay}"-->
-                        <!--<UniformGrid x:Name="TransactionGrid" Columns="{Binding ElementName=listBoxTransactions, Path=ActualWidth, Converter={StaticResource WidthToColumn}}"/>-->
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <!--<DockPanel Margin="30,30,0,0">-->
-                        <Grid Margin="40,40,40,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="64"/>
-                                <ColumnDefinition Width="Auto" SharedSizeGroup="A"/>
-                                <ColumnDefinition Width="Auto" SharedSizeGroup="B"/>
-                                <ColumnDefinition Width="Auto" SharedSizeGroup="C"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition />
-                                <RowDefinition />
-                            </Grid.RowDefinitions>
-                            <Button Grid.RowSpan="2" Command="{Binding DataContext.OpenMarketWindowCommand, ElementName=listBoxResults}" CommandParameter="{Binding TypeId}" Background="{StaticResource SurfaceColor}">
-                                <Image Width="64" Height="64" Source="{Binding Path=Icon}" ></Image>
-                            </Button>
-                            <TextBlock Margin="30,0,0,0" Text="{Binding TypeName}" Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" FontWeight="Bold" Foreground="{StaticResource AccentColor}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" Margin="20,0,20,0" VerticalAlignment="Center">
+                        <ItemsControl ItemsSource="{Binding SecurityWaypoints}" x:Name="WaypointDots" HorizontalAlignment="Left">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Width="10" Height="10" Background="{Binding security, Converter={StaticResource SecConverter}}" CornerRadius="5" Margin="4,0,0,0">
+                                        <Border.ToolTip>
+                                            <ToolTip>
+                                                <StackPanel Orientation="Horizontal" Margin="0">
+                                                    <TextBlock Text="{Binding solarSystemName}" />
+                                                    <TextBlock Margin="6,0,0,0" Text="{Binding security,StringFormat={}{0:N1}}" Foreground="{Binding security, Converter={StaticResource SecConverter}}" />
+                                                </StackPanel>
+                                            </ToolTip>
+                                        </Border.ToolTip>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="{Binding Path=Jumps, StringFormat={}{0} Jumps}" Margin="0,10,0,0" Foreground="#FF9AA3B7" FontWeight="SemiBold"/>
+                    </StackPanel>
 
-                            <StackPanel Grid.Column="1" Grid.Row="1" Margin="30,0,0,0">
-                                <TextBlock  Foreground="{StaticResource ForegroundColor}" FontFamily="Segoe UI Symbol">
+                    <UniformGrid Grid.Column="2" Columns="2" Rows="2" HorizontalAlignment="Right" Margin="0,0,0,0">
+                        <Border Background="{StaticResource CardPositiveColor}" CornerRadius="10" Padding="12" Margin="12,0,0,12" ToolTip="Total Profit">
+                            <StackPanel>
+                                <TextBlock Text="Profit" Foreground="{StaticResource ForegroundColor}" FontSize="12" />
+                                <TextBlock Text="{Binding Path=Profit, StringFormat={}{0:N0} ISK}" Foreground="{StaticResource ForegroundColor}" FontSize="16" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
+                        <Border Background="{StaticResource CardNeutralColor}" CornerRadius="10" Padding="12" Margin="12,0,0,12" ToolTip="Profit per Jump">
+                            <StackPanel>
+                                <TextBlock Text="Profit / Jump" Foreground="{StaticResource AccentColor}" FontSize="12" />
+                                <TextBlock Text="{Binding Path=ProfitPerJump, StringFormat={}{0:N0} ISK}" Foreground="{StaticResource ForegroundColor}" FontSize="16" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
+                        <Border Background="{StaticResource CardNeutralColor}" CornerRadius="10" Padding="12" Margin="12,0,0,0" ToolTip="Total Cost">
+                            <StackPanel>
+                                <TextBlock Text="Cost" Foreground="#FF9AA3B7" FontSize="12" />
+                                <TextBlock Text="{Binding Path=Cost, StringFormat={}{0:N0} ISK}" Foreground="{StaticResource ForegroundColor}" FontSize="16" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
+                        <Border Background="{StaticResource CardNeutralColor}" CornerRadius="10" Padding="12" Margin="12,0,0,0" ToolTip="Cargo Weight">
+                            <StackPanel>
+                                <TextBlock Text="Cargo" Foreground="#FF9AA3B7" FontSize="12" />
+                                <TextBlock>
                                     <TextBlock.Text>
-                                        <MultiBinding StringFormat="&#xE138; {0:N0} ({1:N0} &#xE0AD; {2:N0})">
-                                            <!-- &#xE138;  -->
-                                            <Binding Path="Quantity"></Binding>
-                                            <Binding Path="SellOrder.VolumeRemaining"></Binding>
-                                            <Binding Path="BuyOrder.VolumeRemaining"></Binding>
-                                        </MultiBinding>
+                                        <Binding Path="Weight" StringFormat="{}{0:N2} m³" />
                                     </TextBlock.Text>
                                 </TextBlock>
-                                <TextBlock Grid.Column="3" Grid.Row="2" Foreground="{StaticResource ForegroundColor}" FontFamily="Segoe UI Symbol">
-                                    <TextBlock.ToolTip>
-                                        <ToolTip Content="{Binding TypeVolume}" ContentStringFormat="Type: {0} m3"></ToolTip>
-                                    </TextBlock.ToolTip>
-                                    <TextBlock.Text>
-                                        <MultiBinding StringFormat="&#x1f3ec; {0:N2} m3">
-                                            <Binding Path="Weight"/>
-                                            <Binding Path="TypeVolume"/>
-                                        </MultiBinding>
-                                    </TextBlock.Text>
-                                </TextBlock>
                             </StackPanel>
+                        </Border>
+                    </UniformGrid>
+                </Grid>
 
-                            <StackPanel Grid.Column="2" Grid.Row="1" Margin="30,0,0,0">
-                                <TextBlock Text="{Binding Path=SellOrder.Price, StringFormat=&#xE017; {0:N0} ISK}" FontFamily="Segoe UI Symbol" Grid.Column="5" Grid.Row="0" ToolTip="{Binding Path=SellOrder.OrderId, StringFormat=SellID: {0}}" Foreground="#7F02F602"/>
-                                <!-- #FF238931 #FF892323 -->
-                                <TextBlock Text="{Binding Path=BuyOrder.Price, StringFormat=&#xE016; {0:N0} ISK}" FontFamily="Segoe UI Symbol" Grid.Column="5" Grid.Row="1" Foreground="#7Ff60202"></TextBlock>
-                            </StackPanel>
+                <ItemsControl Grid.Row="2" Margin="0,24,0,0" x:Name="listBoxTransactions" ItemsSource="{Binding Transactions}" Background="Transparent" BorderThickness="0">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Vertical" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,12,0,0" Padding="16" Background="{StaticResource SurfaceColor}" CornerRadius="14" BorderBrush="{StaticResource SubtleBorderColor}" BorderThickness="1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
 
-                            <StackPanel Grid.Column="3" Grid.Row="1" Margin="30,0,0,0">
-                                <TextBlock Text="{Binding Path=Cost, StringFormat=&#xE13C; {0:N0} ISK}" Grid.Column="7" Grid.Row="2" FontFamily="Segoe UI Symbol" Foreground="{StaticResource ForegroundColor}"></TextBlock>
-                                <TextBlock Text="{Binding Path=Profit, StringFormat=&#x1f4b0; {0:N0} ISK}" FontFamily="Segoe UI Symbol" Grid.Column="5" Grid.Row="2" Foreground="{StaticResource ForegroundColor}" FontWeight="Bold"></TextBlock>
-                            </StackPanel>
+                                    <Button Grid.Column="0" Width="64" Height="64" Command="{Binding DataContext.OpenMarketWindowCommand, ElementName=listBoxResults}" CommandParameter="{Binding TypeId}" Background="{StaticResource SurfaceAltColor}" BorderThickness="0" ToolTip="View in Market">
+                                        <Image Width="48" Height="48" Source="{Binding Path=Icon}" Stretch="Uniform" />
+                                    </Button>
 
-                        </Grid>
+                                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding TypeName}" FontWeight="SemiBold" Foreground="{StaticResource ForegroundColor}" FontSize="14" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                            <TextBlock Foreground="{StaticResource ForegroundColor}" FontFamily="Segoe UI Symbol">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="&#xE138; {0:N0}">
+                                                        <Binding Path="Quantity" />
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                            <TextBlock Margin="12,0,0,0" Foreground="#FF9AA3B7">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="Supply {0:N0} | Demand {1:N0}">
+                                                        <Binding Path="SellOrder.VolumeRemaining" />
+                                                        <Binding Path="BuyOrder.VolumeRemaining" />
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </StackPanel>
 
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                                    <StackPanel Grid.Column="2" Margin="16,0,16,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Path=SellOrder.Price, StringFormat=Sell {0:N0} ISK}" Foreground="{StaticResource ForegroundColor}" />
+                                        <TextBlock Text="{Binding Path=BuyOrder.Price, StringFormat=Buy {0:N0} ISK}" Foreground="{StaticResource ForegroundColor}" Margin="0,6,0,0" />
+                                    </StackPanel>
 
-        </Grid>
+                                    <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                        <TextBlock Text="{Binding Path=Cost, StringFormat={}{0:N0} ISK}" Foreground="#FF9AA3B7" FontSize="12" HorizontalAlignment="Right" />
+                                        <TextBlock Text="{Binding Path=Profit, StringFormat={}{0:N0} ISK}" Foreground="{StaticResource AccentColor}" FontSize="14" FontWeight="SemiBold" Margin="0,6,0,0" HorizontalAlignment="Right" />
+                                        <TextBlock Foreground="#FF9AA3B7" FontSize="12" Margin="0,6,0,0" HorizontalAlignment="Right">
+                                            <TextBlock.Text>
+                                                <Binding Path="Weight" StringFormat="{}{0:N2} m³" />
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </Border>
     </DataTemplate>
 </ResourceDictionary>
