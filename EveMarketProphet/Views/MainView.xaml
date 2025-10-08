@@ -42,35 +42,6 @@
                     <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-                <WrapPanel Grid.Column="0" VerticalAlignment="Center" Margin="0" ItemHeight="40">
-                <TextBox x:Name="textBoxCargospace" ToolTip="Cargo space" Text="{local:SettingsBinding MaxCargo,StringFormat=N0,TargetNullValue=''}" Width="90" Margin="0,0,12,0" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                <TextBlock Text="m³" VerticalAlignment="Center" Margin="0,0,16,0" Foreground="{StaticResource AccentColor}"/>
-
-                <TextBox x:Name="textBoxISK" Text="{local:SettingsBinding Capital,StringFormat=N0,TargetNullValue=''}" Width="140" Margin="0,0,12,0" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                <TextBlock Text="ISK" VerticalAlignment="Center" Margin="0,0,16,0" Foreground="{StaticResource AccentColor}"/>
-
-                <CheckBox x:Name="checkBox" Content="High Sec" IsChecked="{local:SettingsBinding IsHighSec}" Margin="0,0,16,0" VerticalAlignment="Center"/>
-
-                <Button x:Name="fetchDataButton" Content="Fetch Data" Command="{Binding FetchDataCommand}" Margin="0,0,12,0" MinWidth="110"/>
-                <ComboBox x:Name="regionSelect" ItemsSource="{Binding RegionLists}" SelectedValue="{Binding SelectedRegionList}" SelectedIndex="0" DisplayMemberPath="Label" Margin="0,0,12,0" Width="140" IsReadOnly="True"/>
-                <Button x:Name="findRoutesButton" Content="Find Routes" Command="{Binding FindRoutesCommand}" Margin="0,0,12,0" MinWidth="110" Background="{StaticResource AccentColor}" Foreground="{StaticResource BackgroundColor}"/>
-
-                <Grid Width="220" Margin="0,0,12,0">
-                    <ComboBox x:Name="fromStationSearch"
-                              ItemsSource="{Binding FromStationSuggestions}"
-                              Text="{Binding FromStationQuery, UpdateSourceTrigger=PropertyChanged}"
-                              IsEditable="True"
-                              IsTextSearchEnabled="True"
-                              StaysOpenOnEdit="True"
-                              HorizontalContentAlignment="Stretch"
-                              MinWidth="220"/>
-                    <TextBlock Text="Search from station..." Margin="12,0,0,0" VerticalAlignment="Center" Foreground="#FF8B93A7" IsHitTestVisible="False">
-                        <TextBlock.Visibility>
-                            <Binding Path="FromStationQuery" Converter="{StaticResource EmptyStringToVisibility}"/>
-                        </TextBlock.Visibility>
-                    </TextBlock>
-                </Grid>
-
                 <Grid Grid.Row="1" Margin="0,24,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="2.5*" />
@@ -122,7 +93,7 @@
                                               IsTextSearchEnabled="True"
                                               StaysOpenOnEdit="True"
                                               HorizontalContentAlignment="Stretch"
-                                              MinDropDownWidth="220"/>
+                                              MinWidth="220"/>
                                     <TextBlock Text="Search from station..." Margin="12,0,0,0" VerticalAlignment="Center" Foreground="#FF596279" IsHitTestVisible="False">
                                         <TextBlock.Visibility>
                                             <Binding Path="FromStationQuery" Converter="{StaticResource EmptyStringToVisibility}"/>

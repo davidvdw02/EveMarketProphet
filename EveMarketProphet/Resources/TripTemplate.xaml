@@ -24,7 +24,7 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource ForegroundColor}">
                         <TextBlock.Text>
-                            <MultiBinding StringFormat="{0} → {1}">
+                            <MultiBinding StringFormat="{}{0} → {1}">
                                 <Binding Path="Transactions[0].SellOrder.StationName"/>
                                 <Binding Path="Transactions[0].BuyOrder.StationName"/>
                             </MultiBinding>
