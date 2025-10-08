@@ -2,11 +2,14 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <SolidColorBrush x:Key="ForegroundColor" Color="#FFE9EDF5" />
-    <SolidColorBrush x:Key="BackgroundColor" Color="#FF141922" />
-    <SolidColorBrush x:Key="SurfaceColor" Color="#FF1F2532" />
-    <SolidColorBrush x:Key="SurfaceAltColor" Color="#FF262D3D" />
-    <SolidColorBrush x:Key="AccentColor" Color="#FF58C4F6" />
-    <SolidColorBrush x:Key="AccentHoverColor" Color="#FF37A4D8" />
-    <SolidColorBrush x:Key="AccentMutedColor" Color="#FF354154" />
+    <SolidColorBrush x:Key="BackgroundColor" Color="#FF101621" />
+    <SolidColorBrush x:Key="SurfaceColor" Color="#FF18202D" />
+    <SolidColorBrush x:Key="SurfaceAltColor" Color="#FF1F2838" />
+    <SolidColorBrush x:Key="AccentColor" Color="#FF4FB7E6" />
+    <SolidColorBrush x:Key="AccentHoverColor" Color="#FF63C6F2" />
+    <SolidColorBrush x:Key="AccentMutedColor" Color="#FF2A3446" />
+    <SolidColorBrush x:Key="CardPositiveColor" Color="#FF3AD6B0" />
+    <SolidColorBrush x:Key="CardNeutralColor" Color="#FF2D3648" />
+    <SolidColorBrush x:Key="SubtleBorderColor" Color="#FF313D50" />
     
 </ResourceDictionary>
