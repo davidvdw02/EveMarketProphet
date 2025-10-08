@@ -95,16 +95,16 @@
                             <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,16,0">
                                 <TextBlock Text="Cargo Space" Foreground="#FF9AA3B7" Margin="0,0,0,4" />
                                 <Grid>
-                                    <TextBox x:Name="textBoxCargospace" ToolTip="Cargo space" Text="{local:SettingsBinding MaxCargo,StringFormat=N0,TargetNullValue=''}" Width="120" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                                    <TextBlock Text="m³" VerticalAlignment="Center" Margin="0,0,10,0" HorizontalAlignment="Right" Foreground="{StaticResource AccentColor}" FontWeight="SemiBold" />
+                                    <TextBox x:Name="textBoxCargospace" ToolTip="Cargo space" Text="{local:SettingsBinding MaxCargo,StringFormat=N0,TargetNullValue=''}" Width="120" HorizontalContentAlignment="Right" VerticalContentAlignment="Center" Padding="4,0,25,0"/>
+                                    <TextBlock Text="m³" VerticalAlignment="Center" Margin="0,0,8,0" HorizontalAlignment="Right" Foreground="{StaticResource AccentColor}" FontWeight="SemiBold" IsHitTestVisible="False" />
                                 </Grid>
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" Grid.Row="0" Margin="0,0,16,0">
                                 <TextBlock Text="Budget" Foreground="#FF9AA3B7" Margin="0,0,0,4" />
                                 <Grid>
-                                    <TextBox x:Name="textBoxISK" Text="{local:SettingsBinding Capital,StringFormat=N0,TargetNullValue=''}" Width="140" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"/>
-                                    <TextBlock Text="ISK" VerticalAlignment="Center" Margin="0,0,10,0" HorizontalAlignment="Right" Foreground="{StaticResource AccentColor}" FontWeight="SemiBold" />
+                                    <TextBox x:Name="textBoxISK" Text="{local:SettingsBinding Capital,StringFormat=N0,TargetNullValue=''}" Width="140" HorizontalContentAlignment="Right" VerticalContentAlignment="Center" Padding="4,0,30,0"/>
+                                    <TextBlock Text="ISK" VerticalAlignment="Center" Margin="0,0,8,0" HorizontalAlignment="Right" Foreground="{StaticResource AccentColor}" FontWeight="SemiBold" IsHitTestVisible="False" />
                                 </Grid>
                             </StackPanel>
 
@@ -154,7 +154,7 @@
                                 </StackPanel>
                             </Button>
 
-                            <ComboBox x:Name="regionSelect" Grid.Column="1" Grid.Row="0" ItemsSource="{Binding RegionLists}" SelectedValue="{Binding SelectedRegionList}" SelectedIndex="0" DisplayMemberPath="Label" Margin="16,0,0,0" Width="160" IsReadOnly="True"/>
+                            <ComboBox x:Name="regionSelect" Grid.Column="1" Grid.Row="0" ItemsSource="{Binding RegionLists}" SelectedValue="{Binding SelectedRegionList}" SelectedIndex="0" DisplayMemberPath="Label" Margin="16,0,0,0" Width="160" IsReadOnly="True" Foreground="Black" Background="White"/>
 
                             <Button x:Name="findRoutesButton" Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Command="{Binding FindRoutesCommand}" Margin="0,16,0,0" MinWidth="160" Background="{StaticResource AccentColor}" Foreground="{StaticResource ForegroundColor}">
                                 <StackPanel Orientation="Horizontal">

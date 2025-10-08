@@ -154,12 +154,8 @@
                         </Border>
                         <Border Background="{StaticResource CardNeutralColor}" CornerRadius="10" Padding="12" Margin="12,0,0,0" ToolTip="Cargo Weight">
                             <StackPanel>
-                                <TextBlock Text="Cargo" Foreground="#FF9AA3B7" FontSize="12" />
-                                <TextBlock>
-                                    <TextBlock.Text>
-                                        <Binding Path="Weight" StringFormat="{}{0:N2} m³" />
-                                    </TextBlock.Text>
-                                </TextBlock>
+                                <TextBlock Text="Cargo" Foreground="{StaticResource AccentColor}" FontSize="12" />
+                                <TextBlock Text="{Binding Path=Weight, StringFormat={}{0:N2} m³}" Foreground="{StaticResource ForegroundColor}" FontSize="16" FontWeight="SemiBold" />
                             </StackPanel>
                         </Border>
                     </UniformGrid>
@@ -215,11 +211,7 @@
                                     <StackPanel Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Right">
                                         <TextBlock Text="{Binding Path=Cost, StringFormat={}{0:N0} ISK}" Foreground="#FF9AA3B7" FontSize="12" HorizontalAlignment="Right" />
                                         <TextBlock Text="{Binding Path=Profit, StringFormat={}{0:N0} ISK}" Foreground="{StaticResource AccentColor}" FontSize="14" FontWeight="SemiBold" Margin="0,6,0,0" HorizontalAlignment="Right" />
-                                        <TextBlock Foreground="#FF9AA3B7" FontSize="12" Margin="0,6,0,0" HorizontalAlignment="Right">
-                                            <TextBlock.Text>
-                                                <Binding Path="Weight" StringFormat="{}{0:N2} m³" />
-                                            </TextBlock.Text>
-                                        </TextBlock>
+                                        <TextBlock Text="{Binding Path=Weight, StringFormat={}{0:N2} m³}" Foreground="{StaticResource ForegroundColor}" FontSize="13" Margin="0,6,0,0" HorizontalAlignment="Right" />
                                     </StackPanel>
                                 </Grid>
                             </Border>
