@@ -1,15 +1,10 @@
 ﻿using EveMarketProphet.Models;
-using JackLeitch.RateGate;
-using Newtonsoft.Json;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using EveMarketProphet.Properties;
-using EveMarketProphet.Utils;
 using Flurl;
 using Flurl.Http;
 
@@ -17,112 +12,75 @@ namespace EveMarketProphet.Services
 {
     public class Market
     {
-        // entries for one page of market orders
-        private ConcurrentBag<List<MarketOrder>> OrdersBag { get; set; } 
-
         public ILookup<int, MarketOrder> OrdersByType { get; private set; }
 
         public static Market Instance { get; } = new Market();
 
         public async Task FetchOrders(List<int> regions)
         {
-            OrdersBag = new ConcurrentBag<List<MarketOrder>>(); 
-
-            var handler = new HttpClientHandler
+            if (regions == null || regions.Count == 0)
             {
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
-            };
-
-            var pageRequests = new ConcurrentQueue<string>();
-
-            foreach (var regionId in regions)
-            {
-                var orderURL = $"https://esi.evetech.net/latest/markets/{regionId}/orders/";
-                var head = await orderURL.HeadAsync();
-
-                var pages_str = head.Headers.GetValues("x-pages").FirstOrDefault();
-                var pages = Int32.Parse(pages_str);
-
-                for (int i = 1; i <= pages; i++)
-                {
-                    pageRequests.Enqueue(orderURL.SetQueryParam("page", i));
-                }
+                OrdersByType = Enumerable.Empty<MarketOrder>().ToLookup(o => o.TypeId);
+                return;
             }
 
-            await Task.Run(() =>
+            var pageRequests = await BuildPageRequestsAsync(regions).ConfigureAwait(false);
+            if (pageRequests.Count == 0)
             {
-                Parallel.ForEach(pageRequests, new ParallelOptions() { MaxDegreeOfParallelism = 20 }, (request) =>
-                {
-                    var result = request.GetJsonAsync<List<MarketOrder>>().Result;
-                    if(result != null)
-                    {
-                        OrdersBag.Add(result);
-                    }
-                });
+                OrdersByType = Enumerable.Empty<MarketOrder>().ToLookup(o => o.TypeId);
+                return;
+            }
 
-                /*using (var client = new HttpClient(handler))
-                using (var rateGate = new RateGate(150, TimeSpan.FromSeconds(1)))
-                {
-                    ParallelUtils.ParallelWhileNotEmpty(pageRequests, (item, adder) =>
-                    {
-                        //rateGate.WaitToProceed();
-
-                        var result = client.GetAsync(item).Result;
-
-                        var json = result.Content.ReadAsStringAsync().Result;
-                        var response = JsonConvert.DeserializeObject<List<MarketOrder>>(json);
-
-                        if (response != null)
-                        {
-                            //if (response.next != null) adder(response.next.href);
-                                OrdersBag.Add(response);
-                            
-                            //Orders.AddRange(response.Orders);
-                            //Trace.WriteLine("Download: " + item);
-                        }
-                    });
-                }*/
-            }).ContinueWith((prevTask) =>
+            var stationsById = Db.Instance.StationsById;
+            var ignoreNullSecStations = Settings.Default.IgnoreNullSecStations;
+            var contrabandLookup = Settings.Default.IgnoreContraband
+                ? new HashSet<int>(Db.Instance.ContrabandTypes.Select(x => x.typeID))
+                : null;
+            var targetParallelism = Math.Max(Environment.ProcessorCount * 4, 8);
+            var maxDegreeOfParallelism = Math.Max(1, Math.Min(targetParallelism, pageRequests.Count));
+            using (var throttler = new SemaphoreSlim(maxDegreeOfParallelism))
             {
-                var orders = new List<MarketOrder>(3000000);
-                foreach (var list in OrdersBag)
+                var fetchTasks = new Task<IReadOnlyList<MarketOrder>>[pageRequests.Count];
+                for (var i = 0; i < pageRequests.Count; i++)
                 {
-                    orders.AddRange(list);
+                    fetchTasks[i] = FetchAndFilterPageAsync(
+                        pageRequests[i],
+                        throttler,
+                        stationsById,
+                        ignoreNullSecStations,
+                        contrabandLookup);
                 }
-                OrdersBag = null;
-                //var orders = OrdersBag.ToList();
 
-                var groupedByStation = orders.ToLookup(x => x.StationId);
+                var filteredBatches = await Task.WhenAll(fetchTasks).ConfigureAwait(false);
 
-                foreach (var stationGroup in groupedByStation)
+                var totalOrders = 0;
+                for (var i = 0; i < filteredBatches.Length; i++)
                 {
-                    var station = Db.Instance.Stations.FirstOrDefault(s => s.stationID == stationGroup.Key);
-                    if (station == null) continue;
+                    totalOrders += filteredBatches[i].Count;
+                }
 
-                    foreach (var order in stationGroup)
+                if (totalOrders == 0)
+                {
+                    OrdersByType = Enumerable.Empty<MarketOrder>().ToLookup(o => o.TypeId);
+                    return;
+                }
+
+                var flattened = new List<MarketOrder>(totalOrders);
+                for (var i = 0; i < filteredBatches.Length; i++)
+                {
+                    var batch = filteredBatches[i];
+                    if (batch.Count == 0)
                     {
-                        //order.SolarSystemId = station.solarSystemID;
-                        order.RegionId = station.regionID;
-                        order.StationSecurity = station.security; //SecurityUtils.RoundSecurity(station.security);
+                        continue;
                     }
+
+                    flattened.AddRange(batch);
                 }
 
-                orders.RemoveAll(x => x.SystemId == 0);
+                OrdersByType = flattened.ToLookup(o => o.TypeId); // create subsets for each item type
+            }
 
-                if (Settings.Default.IgnoreNullSecStations)
-                    orders.RemoveAll(x => x.StationSecurity <= 0.0);
 
-                if (Settings.Default.IgnoreContraband)
-                {
-                    var contraband = Db.Instance.ContrabandTypes.GroupBy(x => x.typeID).Select(x => x.Key);
-                    orders.RemoveAll(x => contraband.Contains(x.TypeId));
-                }
-
-                OrdersByType = orders.ToLookup(o => o.TypeId); // create subsets for each item type
-                orders = null;
-            });
-
-            
 
             /*await Task.Run(() =>
             {
@@ -163,6 +121,106 @@ namespace EveMarketProphet.Services
             var accounting = Settings.Default.AccountingSkill;
 
             return baseTax - (baseTax * (accounting*reduction));
+        }
+
+        private static async Task<List<string>> BuildPageRequestsAsync(IReadOnlyList<int> regions)
+        {
+            if (regions == null || regions.Count == 0)
+            {
+                return new List<string>();
+            }
+
+            var regionTasks = regions.Select(async regionId =>
+            {
+                var orderUrl = $"https://esi.evetech.net/latest/markets/{regionId}/orders/";
+
+                try
+                {
+                    var head = await orderUrl.HeadAsync().ConfigureAwait(false);
+                    var pagesStr = head.Headers.GetValues("x-pages").FirstOrDefault();
+                    if (!int.TryParse(pagesStr, out var pages) || pages < 1)
+                    {
+                        pages = 1;
+                    }
+
+                    var requests = new List<string>(pages);
+                    for (int i = 1; i <= pages; i++)
+                    {
+                        requests.Add(orderUrl.SetQueryParam("page", i));
+                    }
+
+                    return requests;
+                }
+                catch
+                {
+                    return new List<string>();
+                }
+            });
+
+            var regionRequests = await Task.WhenAll(regionTasks).ConfigureAwait(false);
+            return regionRequests.SelectMany(x => x).ToList();
+        }
+
+        private static async Task<IReadOnlyList<MarketOrder>> FetchAndFilterPageAsync(
+            string request,
+            SemaphoreSlim throttler,
+            IReadOnlyDictionary<long, Station> stationsById,
+            bool ignoreNullSecStations,
+            HashSet<int> contrabandLookup)
+        {
+            await throttler.WaitAsync().ConfigureAwait(false);
+
+            try
+            {
+                var result = await request.GetJsonAsync<List<MarketOrder>>().ConfigureAwait(false);
+                if (result == null || result.Count == 0)
+                {
+                    return Array.Empty<MarketOrder>();
+                }
+
+                var filtered = new List<MarketOrder>(result.Count);
+                var enforceNullSec = ignoreNullSecStations;
+                var enforceContraband = contrabandLookup != null;
+
+                foreach (var order in result)
+                {
+                    if (order.SystemId == 0)
+                    {
+                        continue;
+                    }
+
+                    if (enforceContraband && contrabandLookup.Contains(order.TypeId))
+                    {
+                        continue;
+                    }
+
+                    if (!stationsById.TryGetValue(order.StationId, out var station))
+                    {
+                        continue;
+                    }
+
+                    var security = station.security;
+                    if (enforceNullSec && security <= 0.0)
+                    {
+                        continue;
+                    }
+
+                    order.RegionId = station.regionID;
+                    order.StationSecurity = security;
+                    filtered.Add(order);
+                }
+
+                return filtered;
+            }
+            catch
+            {
+                // ignored - failed pages are skipped so the remaining data can still be processed
+                return Array.Empty<MarketOrder>();
+            }
+            finally
+            {
+                throttler.Release();
+            }
         }
     }
 }
