@@ -85,18 +85,7 @@ namespace EveMarketProphet.Services
                         if (tx.Profit < Settings.Default.MinBaseProfit)
                             continue;
 
-                        var route = GetRoute(tx.StartSystemId, tx.EndSystemId);
-                        if (route == null)
-                            continue;
-
-                        tx.Waypoints = route;
-                        tx.Jumps = route.Count;
-                        tx.ProfitPerJump = tx.Jumps > 0 ? tx.Profit / (double)tx.Jumps : tx.Profit;
-
-                        if (tx.ProfitPerJump >= Settings.Default.MinProfitPerJump)
-                        {
-                            profitableTx.Add(tx);
-                        }
+                        profitableTx.Add(tx);
                     }
                 }
             });
@@ -117,7 +106,8 @@ namespace EveMarketProphet.Services
             Parallel.ForEach(stationPairGroups, txGroup =>
             {
                 var selectedTx = new List<Transaction>();
-                var waypoints = txGroup.First().Waypoints;
+                var firstTx = txGroup.First();
+                var waypoints = GetRoute(firstTx.StartSystemId, firstTx.EndSystemId);
 
                 if (waypoints == null)
                     return;
@@ -171,6 +161,9 @@ namespace EveMarketProphet.Services
                                 ? partialTx.Profit / (double)partialTx.Jumps
                                 : partialTx.Profit;
 
+                            if (partialTx.ProfitPerJump < Settings.Default.MinProfitPerJump)
+                                continue;
+
                             if (partialTx.Cost <= isk && partialTx.Weight <= vol)
                             {
                                 quantityToFill -= partialTx.Quantity;
@@ -194,6 +187,9 @@ namespace EveMarketProphet.Services
                                     partTx.ProfitPerJump = partTx.Jumps > 0
                                         ? partTx.Profit / (double)partTx.Jumps
                                         : partTx.Profit;
+
+                                    if (partTx.ProfitPerJump < Settings.Default.MinProfitPerJump)
+                                        continue;
 
                                     if (partTx.Profit > Settings.Default.MinFillerProfit)
                                     {
