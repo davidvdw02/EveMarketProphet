@@ -145,9 +145,6 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
                             <Button x:Name="fetchDataButton" Grid.Column="0" Grid.Row="0" Command="{Binding FetchDataCommand}" MinWidth="130">
@@ -159,47 +156,14 @@
 
                             <ComboBox x:Name="regionSelect" Grid.Column="1" Grid.Row="0" ItemsSource="{Binding RegionLists}" SelectedValue="{Binding SelectedRegionList}" SelectedIndex="0" DisplayMemberPath="Label" Margin="16,0,0,0" Width="160" IsReadOnly="True" Foreground="Black" Background="White"/>
 
-                            <StackPanel Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,16,0,0">
-                                <TextBlock Text="Current System Override" Foreground="#FF9AA3B7" Margin="0,0,0,4" />
-                                <Grid>
-                                    <TextBox Text="{Binding CurrentSystemName, UpdateSourceTrigger=PropertyChanged}" MinWidth="160"/>
-                                    <TextBlock Text="Enter solar system name..." Margin="12,0,0,0" VerticalAlignment="Center" Foreground="#FF596279" IsHitTestVisible="False">
-                                        <TextBlock.Visibility>
-                                            <Binding Path="CurrentSystemName" Converter="{StaticResource EmptyStringToVisibility}" />
-                                        </TextBlock.Visibility>
-                                    </TextBlock>
-                                </Grid>
-                                <TextBlock Text="Ignores settings and keeps searching until a profitable route is found." Foreground="#FF9AA3B7" FontSize="11" Margin="0,4,0,0" />
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" Margin="0,12,0,0">
-                                <TextBlock Text="Destination System (Optional)" Foreground="#FF9AA3B7" Margin="0,0,0,4" />
-                                <Grid>
-                                    <TextBox Text="{Binding DestinationSystemName, UpdateSourceTrigger=PropertyChanged}" MinWidth="160"/>
-                                    <TextBlock Text="Enter target solar system..." Margin="12,0,0,0" VerticalAlignment="Center" Foreground="#FF596279" IsHitTestVisible="False">
-                                        <TextBlock.Visibility>
-                                            <Binding Path="DestinationSystemName" Converter="{StaticResource EmptyStringToVisibility}" />
-                                        </TextBlock.Visibility>
-                                    </TextBlock>
-                                </Grid>
-                                <TextBlock Text="Only show routes that start from the override system and arrive here." Foreground="#FF9AA3B7" FontSize="11" Margin="0,4,0,0" />
-                            </StackPanel>
-
-                            <Button x:Name="findRoutesButton" Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2" Command="{Binding FindRoutesCommand}" Margin="0,16,0,0" MinWidth="160" Background="{StaticResource AccentColor}" Foreground="{StaticResource ForegroundColor}">
+                            <Button x:Name="findRoutesButton" Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Command="{Binding FindRoutesCommand}" Margin="0,16,0,0" MinWidth="160" Background="{StaticResource AccentColor}" Foreground="{StaticResource ForegroundColor}">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="&#xE14C;" FontFamily="Segoe UI Symbol" Margin="0,0,8,0" />
                                     <TextBlock Text="Find Routes" />
                                 </StackPanel>
                             </Button>
 
-                            <Button Grid.Column="0" Grid.Row="4" Grid.ColumnSpan="2" Command="{Binding FindNextRouteCommand}" Margin="0,12,0,0" MinWidth="160">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE149;" FontFamily="Segoe UI Symbol" Margin="0,0,8,0" />
-                                    <TextBlock Text="Search Next Route" />
-                                </StackPanel>
-                            </Button>
-
-                            <Button x:Name="filterButton" Grid.Column="0" Grid.Row="5" Grid.ColumnSpan="2" Command="{Binding ClearFiltersCommand}" Margin="0,12,0,0" MinWidth="160">
+                            <Button x:Name="filterButton" Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2" Command="{Binding ClearFiltersCommand}" Margin="0,12,0,0" MinWidth="160">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="&#xE117;" FontFamily="Segoe UI Symbol" Margin="0,0,8,0" />
                                     <TextBlock Text="Reset Filters" />
