@@ -364,6 +364,7 @@
     <Compile Include="Services\Auth.cs" />
     <Compile Include="Utils\ParallelUtils.cs" />
     <Compile Include="Services\Prophet.cs" />
+    <Compile Include="Services\DiagnosticsLogger.cs" />
     <Compile Include="Converters\SecurityColorConverter.cs" />
     <Compile Include="Converters\StringNullOrEmptyToVisibilityConverter.cs" />
     <Compile Include="Converters\IndexToDisplayConverter.cs" />
