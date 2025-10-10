@@ -29,7 +29,7 @@
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Command="{Binding DataContext.FilterResultsCommand, ElementName=JourneyList}"
-                                CommandParameter="{Binding Legs[0].Transactions[0]}"
+                                CommandParameter="{Binding FirstLeg.PrimaryTransaction}"
                                 Margin="0,0,12,0"
                                 MinWidth="110"
                                 Background="{StaticResource AccentColor}"
@@ -40,7 +40,7 @@
                             </StackPanel>
                         </Button>
                         <Button Command="{Binding DataContext.SetWaypointsCommand, ElementName=JourneyList}"
-                                CommandParameter="{Binding Legs[0].StartSystemId}"
+                                CommandParameter="{Binding FirstLeg.StartSystemId}"
                                 MinWidth="130"
                                 Background="{StaticResource SurfaceColor}"
                                 Foreground="{StaticResource AccentColor}">
