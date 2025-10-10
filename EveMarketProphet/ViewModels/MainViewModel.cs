@@ -349,7 +349,10 @@ namespace EveMarketProphet.ViewModels
 
         private bool MatchesSystemPair(Trip trip)
         {
-            var tx = trip.Transactions.First();
+            var tx = trip.Transactions?.FirstOrDefault();
+
+            if (tx == null)
+                return false;
 
             if (tx.StartSystemId == FilterSystemStartId && tx.EndSystemId == FilterSystemEndId) return true;
 
