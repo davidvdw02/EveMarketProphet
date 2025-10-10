@@ -393,8 +393,17 @@ namespace EveMarketProphet.ViewModels
             if (!(sender is Transaction tx))
                 return;
 
-            FilterSystemStartId = tx.StartSystemId;
-            FilterSystemEndId = tx.EndSystemId;
+            if (tx.SellOrder == null || tx.BuyOrder == null)
+                return;
+
+            var startSystemId = tx.StartSystemId;
+            var endSystemId = tx.EndSystemId;
+
+            if (startSystemId == 0 || endSystemId == 0)
+                return;
+
+            FilterSystemStartId = startSystemId;
+            FilterSystemEndId = endSystemId;
             hasSystemFilter = true;
 
             TripView?.Refresh();
