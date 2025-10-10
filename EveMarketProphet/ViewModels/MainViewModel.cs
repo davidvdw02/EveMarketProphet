@@ -325,20 +325,31 @@ namespace EveMarketProphet.ViewModels
             if (!(sender is Journey journey))
                 return false;
 
+            var legs = journey.Legs ?? Enumerable.Empty<Trip>();
+
             if (hasSystemFilter)
             {
-                var matches = journey.Legs != null && journey.Legs.Any(MatchesSystemPair);
+                var matches = legs.Any(MatchesSystemPair);
                 if (!matches)
                     return false;
             }
 
             if (!string.IsNullOrWhiteSpace(FromStationQuery))
             {
-                var matchesStation = journey.Legs != null && journey.Legs.Any(leg =>
-                    (!string.IsNullOrWhiteSpace(leg.StartStationName) &&
-                        leg.StartStationName.IndexOf(FromStationQuery, StringComparison.InvariantCultureIgnoreCase) >= 0) ||
-                    (!string.IsNullOrWhiteSpace(leg.EndStationName) &&
-                        leg.EndStationName.IndexOf(FromStationQuery, StringComparison.InvariantCultureIgnoreCase) >= 0));
+                var query = FromStationQuery;
+                var matchesStation = legs.Any(leg =>
+                {
+                    var startName = leg?.StartStationName;
+                    if (!string.IsNullOrWhiteSpace(startName) &&
+                        startName.IndexOf(query, StringComparison.InvariantCultureIgnoreCase) >= 0)
+                    {
+                        return true;
+                    }
+
+                    var endName = leg?.EndStationName;
+                    return !string.IsNullOrWhiteSpace(endName) &&
+                           endName.IndexOf(query, StringComparison.InvariantCultureIgnoreCase) >= 0;
+                });
 
                 if (!matchesStation)
                     return false;
@@ -349,9 +360,12 @@ namespace EveMarketProphet.ViewModels
 
         private bool MatchesSystemPair(Trip trip)
         {
-            var tx = trip.Transactions?.FirstOrDefault();
+            if (trip?.Transactions == null)
+                return false;
 
-            if (tx == null)
+            var tx = trip.Transactions.FirstOrDefault();
+
+            if (tx?.SellOrder == null || tx.BuyOrder == null)
                 return false;
 
             if (tx.StartSystemId == FilterSystemStartId && tx.EndSystemId == FilterSystemEndId) return true;
