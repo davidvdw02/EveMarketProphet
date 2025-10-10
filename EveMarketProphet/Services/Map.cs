@@ -42,10 +42,9 @@ namespace EveMarketProphet.Services
             return graph;
         }
 
-        public List<int> FindRoute(int startSolarSystemId, int endSolarSystemId)
+        public List<int> FindRoute(int startSolarSystemId, int endSolarSystemId, bool isHighSec)
         {
             var route = new List<int>();
-            var isHighSec = Properties.Settings.Default.IsHighSec;
 
             // return empty list for inner-solarsystem trade
             if (startSolarSystemId == endSolarSystemId) return route;
