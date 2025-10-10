@@ -8,23 +8,14 @@ using EveMarketProphet.Properties;
 
 namespace EveMarketProphet.Services
 {
-    public class ProphetSearchOptions
-    {
-        public int? StartSystemIdOverride { get; set; }
-        public int? DestinationSystemIdFilter { get; set; }
-        public bool IgnoreSettings { get; set; }
-        public ISet<(int StartSystemId, int EndSystemId)> ExcludedSystemPairs { get; set; }
-        public double? MinimumProfitPerJumpOverride { get; set; }
-    }
-
     public static class Prophet
     {
-        private const double OverrideProfitPerJumpFloor = 15000d;
         private static readonly ConcurrentDictionary<(int Start, int End, bool HighSec), List<int>> RouteCache = new ConcurrentDictionary<(int Start, int End, bool HighSec), List<int>>();
         private static readonly ConcurrentDictionary<(int Start, int End, bool HighSec), byte> UnreachableRoutes = new ConcurrentDictionary<(int Start, int End, bool HighSec), byte>();
 
-        private static List<int> GetRoute(int startSystemId, int endSystemId, bool isHighSec)
+        private static List<int> GetRoute(int startSystemId, int endSystemId)
         {
+            var isHighSec = Settings.Default.IsHighSec;
             var key = (startSystemId, endSystemId, isHighSec);
 
             if (UnreachableRoutes.ContainsKey(key))
@@ -37,7 +28,7 @@ namespace EveMarketProphet.Services
                 return cached;
             }
 
-            var route = Map.Instance.FindRoute(startSystemId, endSystemId, isHighSec);
+            var route = Map.Instance.FindRoute(startSystemId, endSystemId);
             if (route == null)
             {
                 UnreachableRoutes.TryAdd(key, 0);
@@ -50,13 +41,6 @@ namespace EveMarketProphet.Services
 
         public static List<Trip> FindTradeRoutes()
         {
-            return FindTradeRoutes(new ProphetSearchOptions());
-        }
-
-        public static List<Trip> FindTradeRoutes(ProphetSearchOptions options)
-        {
-            options ??= new ProphetSearchOptions();
-
             if (Market.Instance.OrdersByType == null) return null;
             if (Market.Instance.OrdersByType.Count == 0) return null;
 
@@ -64,30 +48,6 @@ namespace EveMarketProphet.Services
             var typesById = db.TypesById;
             var stationsById = db.StationsById;
             var solarSystemsById = db.SolarSystemsById;
-
-            var ignoreSettings = options.IgnoreSettings;
-            var minBaseProfit = ignoreSettings ? 0 : Settings.Default.MinBaseProfit;
-            var minProfitPerJump = options.MinimumProfitPerJumpOverride ?? (ignoreSettings ? OverrideProfitPerJumpFloor : Settings.Default.MinProfitPerJump);
-
-            var startSystemOverride = options.StartSystemIdOverride;
-            var destinationSystemFilter = options.DestinationSystemIdFilter;
-            var excludedPairs = options.ExcludedSystemPairs;
-
-            var hasStartFilter = startSystemOverride.HasValue;
-            var hasDestinationFilter = destinationSystemFilter.HasValue;
-            var hasExcludedPairs = excludedPairs != null && excludedPairs.Count > 0;
-            var startSystemFilterId = startSystemOverride.GetValueOrDefault();
-            var destinationSystemFilterId = destinationSystemFilter.GetValueOrDefault();
-
-            if (ignoreSettings && minProfitPerJump < OverrideProfitPerJumpFloor)
-            {
-                minProfitPerJump = OverrideProfitPerJumpFloor;
-            }
-
-            var minFillerProfit = ignoreSettings ? 0 : Settings.Default.MinFillerProfit;
-            var capital = ignoreSettings ? long.MaxValue : Settings.Default.Capital;
-            var maxCargo = ignoreSettings ? double.MaxValue : Settings.Default.MaxCargo;
-            var requireHighSec = !ignoreSettings && Settings.Default.IsHighSec;
 
             var profitableTx = new ConcurrentBag<Transaction>();
 
@@ -112,26 +72,17 @@ namespace EveMarketProphet.Services
 
                 foreach (var sellOrder in sellOrders)
                 {
-                    if (hasStartFilter && sellOrder.SystemId != startSystemFilterId)
-                        continue;
-
                     foreach (var buyOrder in buyOrders)
                     {
-                        if (hasDestinationFilter && buyOrder.SystemId != destinationSystemFilterId)
-                            continue;
-
-                        if (hasExcludedPairs && excludedPairs.Contains((sellOrder.SystemId, buyOrder.SystemId)))
-                            continue;
-
                         if (sellOrder.Price >= buyOrder.Price)
                             break;
 
                         var tx = new Transaction(sellOrder, buyOrder);
 
-                        if (requireHighSec && tx.SellOrder.StationSecurity < 0.5)
+                        if (Settings.Default.IsHighSec && tx.SellOrder.StationSecurity < 0.5)
                             continue;
 
-                        if (tx.Profit < minBaseProfit)
+                        if (tx.Profit < Settings.Default.MinBaseProfit)
                             continue;
 
                         profitableTx.Add(tx);
@@ -142,28 +93,13 @@ namespace EveMarketProphet.Services
             if (profitableTx.IsEmpty)
                 return null;
 
-            var playerSystemId = startSystemOverride ?? Auth.Instance.GetLocation();
+            var playerSystemId = Auth.Instance.GetLocation();
             if (playerSystemId == 0)
                 playerSystemId = Settings.Default.DefaultLocation;
 
             var stationPairGroups = profitableTx
                 .GroupBy(x => new { x.StartStationId, x.EndStationId })
-                .Select(group => group.OrderByDescending(x => x.Profit).ToList())
-                .Where(group =>
-                {
-                    var firstTx = group.First();
-
-                    if (hasStartFilter && firstTx.StartSystemId != startSystemFilterId)
-                        return false;
-
-                    if (hasDestinationFilter && firstTx.EndSystemId != destinationSystemFilterId)
-                        return false;
-
-                    if (hasExcludedPairs && excludedPairs.Contains((firstTx.StartSystemId, firstTx.EndSystemId)))
-                        return false;
-
-                    return true;
-                });
+                .Select(group => group.OrderByDescending(x => x.Profit).ToList());
 
             var trips = new ConcurrentBag<Trip>();
 
@@ -171,36 +107,36 @@ namespace EveMarketProphet.Services
             {
                 var selectedTx = new List<Transaction>();
                 var firstTx = txGroup.First();
-                var waypoints = GetRoute(firstTx.StartSystemId, firstTx.EndSystemId, requireHighSec);
+                var waypoints = GetRoute(firstTx.StartSystemId, firstTx.EndSystemId);
 
                 if (waypoints == null)
                     return;
 
-                var isk = capital;
-                var vol = maxCargo;
+                var isk = Settings.Default.Capital;
+                var vol = Settings.Default.MaxCargo;
 
-                foreach (var typeGroup in txGroup.GroupBy(x => x.TypeId))
+                var types = txGroup.GroupBy(x => x.TypeId).Select(x => x.Key);
+
+                foreach (var typeId in types)
                 {
-                    var buyOrders = typeGroup
+                    var buyOrders = txGroup.Where(x => x.TypeId == typeId)
                         .Select(x => x.BuyOrder)
-                        .Where(o => !hasDestinationFilter || o.SystemId == destinationSystemFilterId)
                         .OrderByDescending(x => x.Price)
                         .GroupBy(x => x.OrderId)
                         .Select(x => x.First())
                         .ToList();
 
-                    var sellOrders = typeGroup
+                    var sellOrders = txGroup.Where(x => x.TypeId == typeId)
                         .Select(x => x.SellOrder)
-                        .Where(o => !hasStartFilter || o.SystemId == startSystemFilterId)
                         .OrderBy(x => x.Price)
                         .GroupBy(x => x.OrderId)
                         .Select(x => x.First())
                         .ToList();
 
-                    if (buyOrders.Count == 0 || sellOrders.Count == 0)
-                        continue;
-
-                    var tracker = sellOrders.ToDictionary(x => x.OrderId, x => x.VolumeRemaining);
+                    var tracker = sellOrders
+                        .GroupBy(x => x.OrderId)
+                        .Select(x => x.First())
+                        .ToDictionary(x => x.OrderId, x => x.VolumeRemaining);
 
                     foreach (var buyOrder in buyOrders)
                     {
@@ -209,9 +145,6 @@ namespace EveMarketProphet.Services
 
                         foreach (var sellOrder in sellOrders)
                         {
-                            if (hasExcludedPairs && excludedPairs.Contains((sellOrder.SystemId, buyOrder.SystemId)))
-                                continue;
-
                             if (tracker[sellOrder.OrderId] <= 0)
                                 continue;
 
@@ -228,7 +161,7 @@ namespace EveMarketProphet.Services
                                 ? partialTx.Profit / (double)partialTx.Jumps
                                 : partialTx.Profit;
 
-                            if (partialTx.ProfitPerJump < minProfitPerJump)
+                            if (partialTx.ProfitPerJump < Settings.Default.MinProfitPerJump)
                                 continue;
 
                             if (partialTx.Cost <= isk && partialTx.Weight <= vol)
@@ -240,12 +173,7 @@ namespace EveMarketProphet.Services
                             }
                             else
                             {
-                                var quantityIsk = 0;
-                                if (sellOrder.Price > 0)
-                                {
-                                    var maxAffordable = isk / sellOrder.Price;
-                                    quantityIsk = (int)System.Math.Min(int.MaxValue, maxAffordable);
-                                }
+                                var quantityIsk = sellOrder.Price > 0 ? (int)(isk / sellOrder.Price) : 0;
                                 var quantityWeight = sellOrder.TypeVolume > 0 ? (int)(vol / sellOrder.TypeVolume) : 0;
                                 var quantityPart = Math.Min(quantityIsk, quantityWeight);
 
@@ -260,10 +188,10 @@ namespace EveMarketProphet.Services
                                         ? partTx.Profit / (double)partTx.Jumps
                                         : partTx.Profit;
 
-                                    if (partTx.ProfitPerJump < minProfitPerJump)
+                                    if (partTx.ProfitPerJump < Settings.Default.MinProfitPerJump)
                                         continue;
 
-                                    if (partTx.Profit > minFillerProfit)
+                                    if (partTx.Profit > Settings.Default.MinFillerProfit)
                                     {
                                         quantityToFill -= partTx.Quantity;
                                         isk -= partTx.Cost;
@@ -307,7 +235,7 @@ namespace EveMarketProphet.Services
                         Weight = selectedTx.Sum(x => x.Weight)
                     };
 
-                    var approachRoute = GetRoute(playerSystemId, trip.Transactions.First().StartSystemId, requireHighSec);
+                    var approachRoute = GetRoute(playerSystemId, trip.Transactions.First().StartSystemId);
                     if (approachRoute != null)
                     {
                         trip.Waypoints = approachRoute;
@@ -333,7 +261,7 @@ namespace EveMarketProphet.Services
                             }
                         }
 
-                        if (trip.ProfitPerJump >= minProfitPerJump)
+                        if (trip.ProfitPerJump >= Settings.Default.MinProfitPerJump)
                         {
                             trips.Add(trip);
                         }

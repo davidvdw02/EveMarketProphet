@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
@@ -88,40 +87,11 @@ namespace EveMarketProphet.ViewModels
             set { SetProperty(ref _showProgressBar, value); }
         }
 
-        private const double MinimumProfitPerJumpDisplay = 15000d;
-
-        private string currentSystemName;
-        public string CurrentSystemName
-        {
-            get { return currentSystemName; }
-            set
-            {
-                if (SetProperty(ref currentSystemName, value))
-                {
-                    findNextRouteCommand?.RaiseCanExecuteChanged();
-                }
-            }
-        }
-
-        private string destinationSystemName;
-        public string DestinationSystemName
-        {
-            get { return destinationSystemName; }
-            set
-            {
-                if (SetProperty(ref destinationSystemName, value))
-                {
-                    findNextRouteCommand?.RaiseCanExecuteChanged();
-                }
-            }
-        }
-
         public List<RegionSelect> RegionLists { get; set; }
         public RegionSelect SelectedRegionList { get; set; }
 
         public ICommand FetchDataCommand { get; private set; }
         public ICommand FindRoutesCommand { get; private set; }
-        public ICommand FindNextRouteCommand => findNextRouteCommand;
         public ICommand FilterResultsCommand { get; private set; }
         public ICommand OpenMarketWindowCommand { get; private set; }
         public ICommand SetWaypointsCommand { get; private set; }
@@ -139,12 +109,6 @@ namespace EveMarketProphet.ViewModels
         }
 
         private readonly IProgress<int> progress;
-        private CancellationTokenSource routeSearchCancellation;
-        private readonly DelegateCommand findNextRouteCommand;
-        private readonly HashSet<(int StartSystemId, int EndSystemId)> overrideExcludedSystemPairs = new HashSet<(int StartSystemId, int EndSystemId)>();
-        private bool findNextOverrideRequested;
-        private string lastOverrideSystemInput;
-        private string lastDestinationSystemInput;
 
 
         public MainViewModel()
@@ -152,7 +116,6 @@ namespace EveMarketProphet.ViewModels
 
             FetchDataCommand = new DelegateCommand(this.OnFetchData, this.CanFetchData);
             FindRoutesCommand = new DelegateCommand(this.OnFindRoutes);
-            findNextRouteCommand = new DelegateCommand(OnFindNextRoute, CanFindNextRoute);
             FilterResultsCommand = new DelegateCommand<object>(this.OnFilterResults);
             OpenMarketWindowCommand = new DelegateCommand<object>(this.OnOpenMarketWindow);
             SetWaypointsCommand = new DelegateCommand<object>(this.OnSetWaypoints);
@@ -200,8 +163,6 @@ namespace EveMarketProphet.ViewModels
 
             Trips = new ObservableCollection<Trip>(items);
             TripView = CollectionViewSource.GetDefaultView(Trips);
-
-            findNextRouteCommand?.RaiseCanExecuteChanged();
 
             if (TripView != null)
             {
@@ -293,186 +254,27 @@ namespace EveMarketProphet.ViewModels
 
         private async void OnFindRoutes()
         {
-            var newCts = new CancellationTokenSource();
-            var previousCts = Interlocked.Exchange(ref routeSearchCancellation, newCts);
-            previousCts?.Cancel();
-            previousCts?.Dispose();
-
-            var token = newCts.Token;
-
-            var trimmedSystemName = CurrentSystemName?.Trim();
-            var trimmedDestinationName = DestinationSystemName?.Trim();
-            int? overrideSystemId = null;
-            string resolvedSystemName = null;
-            int? destinationSystemId = null;
-            string resolvedDestinationSystemName = null;
-            var useContinuousSearch = false;
-
-            var normalizedSystemInput = trimmedSystemName ?? string.Empty;
-            var normalizedDestinationInput = trimmedDestinationName ?? string.Empty;
-            var overrideInputChanged = !string.Equals(normalizedSystemInput, lastOverrideSystemInput, StringComparison.InvariantCultureIgnoreCase)
-                                       || !string.Equals(normalizedDestinationInput, lastDestinationSystemInput, StringComparison.InvariantCultureIgnoreCase);
-
-            if (!string.IsNullOrWhiteSpace(trimmedSystemName))
-            {
-                var system = Db.Instance.SolarSystems
-                    .FirstOrDefault(s => s.solarSystemName.Equals(trimmedSystemName, StringComparison.InvariantCultureIgnoreCase));
-
-                if (system == null)
-                {
-                    StatusBarText = $"Solar system \"{trimmedSystemName}\" was not found.";
-                    if (Interlocked.CompareExchange(ref routeSearchCancellation, null, newCts) == newCts)
-                    {
-                        newCts.Dispose();
-                    }
-                    return;
-                }
-
-                overrideSystemId = system.solarSystemID;
-                resolvedSystemName = system.solarSystemName;
-                useContinuousSearch = true;
-            }
-
-            if (!string.IsNullOrWhiteSpace(trimmedDestinationName))
-            {
-                var destinationSystem = Db.Instance.SolarSystems
-                    .FirstOrDefault(s => s.solarSystemName.Equals(trimmedDestinationName, StringComparison.InvariantCultureIgnoreCase));
-
-                if (destinationSystem == null)
-                {
-                    StatusBarText = $"Solar system \"{trimmedDestinationName}\" was not found.";
-                    if (Interlocked.CompareExchange(ref routeSearchCancellation, null, newCts) == newCts)
-                    {
-                        newCts.Dispose();
-                    }
-                    return;
-                }
-
-                destinationSystemId = destinationSystem.solarSystemID;
-                resolvedDestinationSystemName = destinationSystem.solarSystemName;
-                useContinuousSearch = true;
-            }
-
-            if (!useContinuousSearch)
-            {
-                overrideExcludedSystemPairs.Clear();
-                lastOverrideSystemInput = null;
-                lastDestinationSystemInput = null;
-            }
-            else if (overrideInputChanged && !findNextOverrideRequested)
-            {
-                overrideExcludedSystemPairs.Clear();
-            }
-
-            if (useContinuousSearch)
-            {
-                lastOverrideSystemInput = normalizedSystemInput;
-                lastDestinationSystemInput = normalizedDestinationInput;
-            }
-
             IsAvailable = false;
             ShowProgressBar = Visibility.Visible;
+            StatusBarText = "Processing market data ...";
 
-            try
+            var s = Stopwatch.StartNew();
+            var list = await Task.Run(() => Prophet.FindTradeRoutes());
+            s.Stop();
+            var ts = s.Elapsed;
+            var elapsedTime = $"{ts.Hours:00}:{ts.Minutes:00}:{ts.Seconds:00}.{ts.Milliseconds/10:00}";
+            Debug.WriteLine("Processed market data in " + elapsedTime);
+            StatusBarText = "Processed market data in " + elapsedTime;
+            
+            //Trips = new ObservableCollection<Trip>(EveMarketData.Instance.Trips);
+
+            if (list != null)
             {
-                List<Trip> list = null;
-
-                if (useContinuousSearch)
-                {
-                    var stopwatch = Stopwatch.StartNew();
-                    var routeDescriptor = BuildRouteDescription(resolvedSystemName, resolvedDestinationSystemName);
-                    var routeDescriptionSuffix = string.IsNullOrWhiteSpace(routeDescriptor) ? string.Empty : $" {routeDescriptor}";
-                    var searchingMessage = findNextOverrideRequested
-                        ? $"Searching for another profitable route{routeDescriptionSuffix} (ignoring settings)..."
-                        : $"Searching for profitable routes{routeDescriptionSuffix} (ignoring settings)...";
-                    StatusBarText = searchingMessage;
-
-                    var options = new ProphetSearchOptions
-                    {
-                        StartSystemIdOverride = overrideSystemId,
-                        DestinationSystemIdFilter = destinationSystemId,
-                        IgnoreSettings = true
-                    };
-
-                    options.ExcludedSystemPairs = new HashSet<(int StartSystemId, int EndSystemId)>(overrideExcludedSystemPairs);
-                    options.MinimumProfitPerJumpOverride = MinimumProfitPerJumpDisplay;
-
-                    while (!token.IsCancellationRequested)
-                    {
-                        list = await Task.Run(() => Prophet.FindTradeRoutes(options), token);
-
-                        if (list == null)
-                        {
-                            StatusBarText = "Market data is unavailable. Fetch data before searching for routes.";
-                            break;
-                        }
-
-                        if (list.Count > 0)
-                        {
-                            stopwatch.Stop();
-                            var ts = stopwatch.Elapsed;
-                            var elapsedTime = $"{ts.Hours:00}:{ts.Minutes:00}:{ts.Seconds:00}.{ts.Milliseconds / 10:00}";
-                            var foundMessage = findNextOverrideRequested
-                                ? $"Found an alternative profitable route{routeDescriptionSuffix} in {elapsedTime}."
-                                : $"Found a profitable route{routeDescriptionSuffix} in {elapsedTime}.";
-                            StatusBarText = foundMessage;
-                            break;
-                        }
-
-                        StatusBarText = findNextOverrideRequested
-                            ? $"No additional profitable routes{routeDescriptionSuffix} yet. Retrying..."
-                            : $"No profitable routes{routeDescriptionSuffix} yet. Retrying...";
-                        await Task.Delay(TimeSpan.FromSeconds(10), token);
-                    }
-                }
-                else
-                {
-                    StatusBarText = "Processing market data ...";
-                    var stopwatch = Stopwatch.StartNew();
-                    list = await Task.Run(() => Prophet.FindTradeRoutes(), token);
-                    stopwatch.Stop();
-                    var ts = stopwatch.Elapsed;
-                    var elapsedTime = $"{ts.Hours:00}:{ts.Minutes:00}:{ts.Seconds:00}.{ts.Milliseconds / 10:00}";
-                    Debug.WriteLine("Processed market data in " + elapsedTime);
-                    StatusBarText = "Processed market data in " + elapsedTime;
-                }
-
-                if (!token.IsCancellationRequested)
-                {
-                    if (list != null && list.Count > 0)
-                    {
-                        ApplyTrips(list);
-                    }
-                    else if (!useContinuousSearch && list != null)
-                    {
-                        StatusBarText = "No profitable routes found.";
-                    }
-                    else if (useContinuousSearch && list != null && list.Count == 0)
-                    {
-                        var routeDescriptor = BuildRouteDescription(resolvedSystemName, resolvedDestinationSystemName);
-                        var routeDescriptionSuffix = string.IsNullOrWhiteSpace(routeDescriptor) ? string.Empty : $" {routeDescriptor}";
-                        StatusBarText = findNextOverrideRequested
-                            ? $"Unable to find another profitable route{routeDescriptionSuffix} right now."
-                            : $"Unable to find a profitable route{routeDescriptionSuffix}.";
-                    }
-                }
+                ApplyTrips(list);
             }
-            catch (OperationCanceledException)
-            {
-                StatusBarText = "Route search canceled.";
-            }
-            finally
-            {
-                ShowProgressBar = Visibility.Hidden;
-                IsAvailable = true;
-                findNextOverrideRequested = false;
-                findNextRouteCommand?.RaiseCanExecuteChanged();
 
-                if (Interlocked.CompareExchange(ref routeSearchCancellation, null, newCts) == newCts)
-                {
-                    newCts.Dispose();
-                }
-            }
+            ShowProgressBar = Visibility.Hidden;
+            IsAvailable = true;
         }
 
         private int FilterSystemStartId { get; set; }
@@ -482,9 +284,6 @@ namespace EveMarketProphet.ViewModels
         private bool TripFilter(object sender)
         {
             if (!(sender is Trip trip))
-                return false;
-
-            if (trip.ProfitPerJump < MinimumProfitPerJumpDisplay)
                 return false;
 
             if (hasSystemFilter && !MatchesSystemPair(trip))
@@ -584,46 +383,6 @@ namespace EveMarketProphet.ViewModels
             }
 
             Auth.Instance.SetWaypoints(systemId, clearOtherWaypoints);
-        }
-
-        private bool CanFindNextRoute()
-        {
-            return Trips != null && Trips.Count > 0 && (!string.IsNullOrWhiteSpace(CurrentSystemName) || !string.IsNullOrWhiteSpace(DestinationSystemName));
-        }
-
-        private void OnFindNextRoute()
-        {
-            if (Trips == null || Trips.Count == 0)
-                return;
-
-            var firstTrip = Trips.FirstOrDefault();
-            var firstTransaction = firstTrip?.Transactions?.FirstOrDefault();
-            if (firstTransaction == null)
-                return;
-
-            overrideExcludedSystemPairs.Add((firstTransaction.StartSystemId, firstTransaction.EndSystemId));
-            findNextOverrideRequested = true;
-            OnFindRoutes();
-        }
-
-        private static string BuildRouteDescription(string startSystemName, string destinationSystemName)
-        {
-            if (!string.IsNullOrWhiteSpace(startSystemName) && !string.IsNullOrWhiteSpace(destinationSystemName))
-            {
-                return $"from {startSystemName} to {destinationSystemName}";
-            }
-
-            if (!string.IsNullOrWhiteSpace(startSystemName))
-            {
-                return $"from {startSystemName}";
-            }
-
-            if (!string.IsNullOrWhiteSpace(destinationSystemName))
-            {
-                return $"to {destinationSystemName}";
-            }
-
-            return "";
         }
     }
 }
