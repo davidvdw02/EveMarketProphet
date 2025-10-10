@@ -361,12 +361,24 @@ namespace EveMarketProphet.ViewModels
         private bool MatchesSystemPair(Trip trip)
         {
             if (trip?.Transactions == null)
+            {
+                DiagnosticsLogger.Log("MatchesSystemPair: trip missing transactions");
                 return false;
+            }
 
             var tx = trip.Transactions.FirstOrDefault();
 
-            if (tx?.SellOrder == null || tx?.BuyOrder == null)
+            if (tx == null)
+            {
+                DiagnosticsLogger.Log("MatchesSystemPair: trip has no primary transaction");
                 return false;
+            }
+
+            if (tx.SellOrder == null || tx.BuyOrder == null)
+            {
+                DiagnosticsLogger.Log($"MatchesSystemPair: incomplete orders (sell: {tx.SellOrder != null}, buy: {tx.BuyOrder != null})");
+                return false;
+            }
 
             if (tx.StartSystemId == FilterSystemStartId && tx.EndSystemId == FilterSystemEndId) return true;
 
@@ -390,24 +402,49 @@ namespace EveMarketProphet.ViewModels
 
         private void OnFilterResults(object sender)
         {
+            DiagnosticsLogger.Log($"OnFilterResults invoked. Parameter type={sender?.GetType().FullName ?? "null"}");
+
             if (!(sender is Transaction tx))
+            {
+                DiagnosticsLogger.Log("OnFilterResults aborted: parameter was not a transaction");
                 return;
+            }
 
-            if (tx.SellOrder == null || tx.BuyOrder == null)
-                return;
+            try
+            {
+                if (tx.SellOrder == null || tx.BuyOrder == null)
+                {
+                    DiagnosticsLogger.Log("OnFilterResults aborted: transaction missing buy/sell order");
+                    return;
+                }
 
-            var startSystemId = tx.StartSystemId;
-            var endSystemId = tx.EndSystemId;
+                var startSystemId = tx.StartSystemId;
+                var endSystemId = tx.EndSystemId;
 
-            if (startSystemId == 0 || endSystemId == 0)
-                return;
+                DiagnosticsLogger.Log($"OnFilterResults inspecting transaction. startSystemId={startSystemId}, endSystemId={endSystemId}");
 
-            FilterSystemStartId = startSystemId;
-            FilterSystemEndId = endSystemId;
-            hasSystemFilter = true;
+                if (startSystemId == 0 || endSystemId == 0)
+                {
+                    DiagnosticsLogger.Log("OnFilterResults aborted: transaction missing system identifiers");
+                    return;
+                }
 
-            TripView?.Refresh();
-            JourneyView?.Refresh();
+                FilterSystemStartId = startSystemId;
+                FilterSystemEndId = endSystemId;
+                hasSystemFilter = true;
+
+                DiagnosticsLogger.Log($"OnFilterResults applied system filter. filterStart={FilterSystemStartId}, filterEnd={FilterSystemEndId}");
+
+                TripView?.Refresh();
+                JourneyView?.Refresh();
+
+                DiagnosticsLogger.Log("OnFilterResults triggered view refresh");
+            }
+            catch (Exception ex)
+            {
+                DiagnosticsLogger.LogException("OnFilterResults failed", ex);
+                throw;
+            }
         }
 
         private void OnOpenSettings()
