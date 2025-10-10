@@ -38,18 +38,25 @@ namespace EveMarketProphet.ViewModels
             private set { SetProperty(ref trips, value); }
         }
 
-        /*private ObservableCollection<RoundTrip> roundtrips;
-        public ObservableCollection<RoundTrip> RoundTrips
+        private ObservableCollection<Journey> journeys;
+        public ObservableCollection<Journey> Journeys
         {
-            get { return roundtrips; }
-            private set { SetProperty(ref roundtrips, value); }
-        }*/
+            get { return journeys; }
+            private set { SetProperty(ref journeys, value); }
+        }
 
         private ICollectionView tripView;
         public ICollectionView TripView
         {
             get { return tripView; }
             private set { SetProperty(ref tripView, value); }
+        }
+
+        private ICollectionView journeyView;
+        public ICollectionView JourneyView
+        {
+            get { return journeyView; }
+            private set { SetProperty(ref journeyView, value); }
         }
 
         private ObservableCollection<string> fromStationSuggestions = new ObservableCollection<string>();
@@ -68,6 +75,7 @@ namespace EveMarketProphet.ViewModels
                 if (SetProperty(ref fromStationQuery, value))
                 {
                     TripView?.Refresh();
+                    JourneyView?.Refresh();
                 }
             }
         }
@@ -155,6 +163,7 @@ namespace EveMarketProphet.ViewModels
             };
 
             ApplyTrips(list);
+            ApplyJourneys(null);
         }
 
         private void ApplyTrips(IEnumerable<Trip> tripList)
@@ -171,6 +180,20 @@ namespace EveMarketProphet.ViewModels
             }
 
             UpdateFromStationSuggestions();
+        }
+
+        private void ApplyJourneys(IEnumerable<Journey> journeyList)
+        {
+            var items = journeyList ?? Enumerable.Empty<Journey>();
+
+            Journeys = new ObservableCollection<Journey>(items);
+            JourneyView = CollectionViewSource.GetDefaultView(Journeys);
+
+            if (JourneyView != null)
+            {
+                JourneyView.Filter = JourneyFilter;
+                JourneyView.Refresh();
+            }
         }
 
         private void UpdateFromStationSuggestions()
@@ -259,19 +282,17 @@ namespace EveMarketProphet.ViewModels
             StatusBarText = "Processing market data ...";
 
             var s = Stopwatch.StartNew();
-            var list = await Task.Run(() => Prophet.FindTradeRoutes());
+            var result = await Task.Run(() => Prophet.FindTradeRoutes());
             s.Stop();
             var ts = s.Elapsed;
             var elapsedTime = $"{ts.Hours:00}:{ts.Minutes:00}:{ts.Seconds:00}.{ts.Milliseconds/10:00}";
             Debug.WriteLine("Processed market data in " + elapsedTime);
             StatusBarText = "Processed market data in " + elapsedTime;
-            
+
             //Trips = new ObservableCollection<Trip>(EveMarketData.Instance.Trips);
 
-            if (list != null)
-            {
-                ApplyTrips(list);
-            }
+            ApplyTrips(result?.Trips);
+            ApplyJourneys(result?.Journeys);
 
             ShowProgressBar = Visibility.Hidden;
             IsAvailable = true;
@@ -299,6 +320,33 @@ namespace EveMarketProphet.ViewModels
             return true;
         }
 
+        private bool JourneyFilter(object sender)
+        {
+            if (!(sender is Journey journey))
+                return false;
+
+            if (hasSystemFilter)
+            {
+                var matches = journey.Legs != null && journey.Legs.Any(MatchesSystemPair);
+                if (!matches)
+                    return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(FromStationQuery))
+            {
+                var matchesStation = journey.Legs != null && journey.Legs.Any(leg =>
+                    (!string.IsNullOrWhiteSpace(leg.StartStationName) &&
+                        leg.StartStationName.IndexOf(FromStationQuery, StringComparison.InvariantCultureIgnoreCase) >= 0) ||
+                    (!string.IsNullOrWhiteSpace(leg.EndStationName) &&
+                        leg.EndStationName.IndexOf(FromStationQuery, StringComparison.InvariantCultureIgnoreCase) >= 0));
+
+                if (!matchesStation)
+                    return false;
+            }
+
+            return true;
+        }
+
         private bool MatchesSystemPair(Trip trip)
         {
             var tx = trip.Transactions.First();
@@ -320,6 +368,7 @@ namespace EveMarketProphet.ViewModels
             FromStationQuery = string.Empty;
 
             TripView?.Refresh();
+            JourneyView?.Refresh();
         }
 
         private void OnFilterResults(object sender)
@@ -332,6 +381,7 @@ namespace EveMarketProphet.ViewModels
             hasSystemFilter = true;
 
             TripView?.Refresh();
+            JourneyView?.Refresh();
         }
 
         private void OnOpenSettings()

@@ -90,6 +90,15 @@ Keep in mind that your ingame settings for safer/faster routes still applies, so
 The **Clear Filter** button in the toolbar will remove the filtering.
 
 
+## Journey Planner
+
+A journey chains multiple trips together into a single plan, starting from your current location and visiting several profitable destinations in sequence.
+
+Open the **Journeys** tab to review the suggested multi-leg plans. Each journey shows the overall profit, profit per jump, maximum investment and cargo required at any stage, plus every leg with its individual metrics. Use the built-in filter and waypoint buttons to quickly focus on a particular journey or set the first set of waypoints in-game.
+
+Journeys reuse the same cargo and capital settings as individual trips, so every leg remains flyable with your configured limits while offering a longer trading circuit.
+
+
 ## Transaction
 
 ![tx](Docs/Images/tx.png)
