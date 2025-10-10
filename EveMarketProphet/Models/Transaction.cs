@@ -11,17 +11,17 @@ namespace EveMarketProphet.Models
         public double Profit { get; private set; }
         public int Quantity { get; private set; }
 
-        public long StartStationId => SellOrder.StationId; 
-        public long EndStationId => BuyOrder.StationId;
-        public int StartSystemId => SellOrder.SystemId;
-        public int EndSystemId => BuyOrder.SystemId;
-        public int TypeId => SellOrder.TypeId;
-        public string TypeName => SellOrder.TypeName;
-        public double TypeVolume => SellOrder.TypeVolume;
-        public string Icon => $"https://image.eveonline.com/Type/{TypeId}_64.png";
+        public long StartStationId => SellOrder?.StationId ?? 0;
+        public long EndStationId => BuyOrder?.StationId ?? 0;
+        public int StartSystemId => SellOrder?.SystemId ?? 0;
+        public int EndSystemId => BuyOrder?.SystemId ?? 0;
+        public int TypeId => SellOrder?.TypeId ?? BuyOrder?.TypeId ?? 0;
+        public string TypeName => SellOrder?.TypeName ?? BuyOrder?.TypeName;
+        public double TypeVolume => SellOrder?.TypeVolume ?? BuyOrder?.TypeVolume ?? 0;
+        public string Icon => TypeId > 0 ? $"https://image.eveonline.com/Type/{TypeId}_64.png" : string.Empty;
 
-        public long Cost => Quantity * SellOrder.Price;
-        public double Weight => Quantity * SellOrder.TypeVolume;
+        public long Cost => SellOrder != null ? Quantity * SellOrder.Price : 0;
+        public double Weight => SellOrder != null ? Quantity * SellOrder.TypeVolume : 0;
 
         public List<int> Waypoints { get; set; }
         public double ProfitPerJump { get; set; } //{ get { return Waypoints.Count > 0 ? Profit / Waypoints.Count : Profit; } }
