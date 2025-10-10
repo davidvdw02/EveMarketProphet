@@ -365,7 +365,7 @@ namespace EveMarketProphet.ViewModels
 
             var tx = trip.Transactions.FirstOrDefault();
 
-            if (tx?.SellOrder == null || tx.BuyOrder == null)
+            if (tx?.SellOrder == null || tx?.BuyOrder == null)
                 return false;
 
             if (tx.StartSystemId == FilterSystemStartId && tx.EndSystemId == FilterSystemEndId) return true;
