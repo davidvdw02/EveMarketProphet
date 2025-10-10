@@ -207,46 +207,23 @@
             </StatusBar>
         </Border>
 
-        <TabControl Margin="32" Background="Transparent" BorderThickness="0">
-            <TabItem Header="Trips">
-                <ListView x:Name="listBoxResults"
-                          Grid.IsSharedSizeScope="True"
-                          ItemsSource="{Binding TripView, Mode=OneWay}"
-                          ItemTemplate="{StaticResource TripTemplate}"
-                          HorizontalContentAlignment="Stretch"
-                          ScrollViewer.CanContentScroll="False"
-                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                          Background="Transparent"
-                          BorderThickness="0"
-                          Padding="0"
-                          Margin="0,16,0,0">
-                    <ListView.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Vertical" />
-                        </ItemsPanelTemplate>
-                    </ListView.ItemsPanel>
-                </ListView>
-            </TabItem>
-            <TabItem Header="Journeys">
-                <ListView x:Name="JourneyList"
-                          Grid.IsSharedSizeScope="True"
-                          ItemsSource="{Binding JourneyView, Mode=OneWay}"
-                          ItemTemplate="{StaticResource JourneyTemplate}"
-                          HorizontalContentAlignment="Stretch"
-                          ScrollViewer.CanContentScroll="False"
-                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                          Background="Transparent"
-                          BorderThickness="0"
-                          Padding="0"
-                          Margin="0,16,0,0">
-                    <ListView.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Vertical" />
-                        </ItemsPanelTemplate>
-                    </ListView.ItemsPanel>
-                </ListView>
-            </TabItem>
-        </TabControl>
+        <ListView x:Name="listBoxResults"
+                  Grid.IsSharedSizeScope="True"
+                  ItemsSource="{Binding TripView, Mode=OneWay}"
+                  ItemTemplate="{StaticResource TripTemplate}"
+                  HorizontalContentAlignment="Stretch"
+                  ScrollViewer.CanContentScroll="False"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                  Background="Transparent"
+                  BorderThickness="0"
+                  Margin="32"
+                  Padding="0">
+            <ListView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Vertical" />
+                </ItemsPanelTemplate>
+            </ListView.ItemsPanel>
+        </ListView>
 
     </DockPanel>
 

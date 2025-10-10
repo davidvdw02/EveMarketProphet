@@ -366,11 +366,8 @@
     <Compile Include="Services\Prophet.cs" />
     <Compile Include="Converters\SecurityColorConverter.cs" />
     <Compile Include="Converters\StringNullOrEmptyToVisibilityConverter.cs" />
-    <Compile Include="Converters\IndexToDisplayConverter.cs" />
     <Compile Include="Models\Transaction.cs" />
     <Compile Include="Models\Trip.cs" />
-    <Compile Include="Models\Journey.cs" />
-    <Compile Include="Models\RouteSearchResult.cs" />
     <Compile Include="Utils\SecurityUtils.cs" />
     <Compile Include="Extensions\SettingsBindingExtension.cs" />
     <Compile Include="Views\SettingsView.xaml.cs">
@@ -413,10 +410,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Resources\TripTemplate.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Resources\JourneyTemplate.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
