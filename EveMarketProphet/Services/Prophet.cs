@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using EveMarketProphet.Models;
 using EveMarketProphet.Properties;
@@ -40,7 +39,7 @@ namespace EveMarketProphet.Services
             return route;
         }
 
-        public static RouteSearchResult FindTradeRoutes()
+        public static List<Trip> FindTradeRoutes()
         {
             if (Market.Instance.OrdersByType == null) return null;
             if (Market.Instance.OrdersByType.Count == 0) return null;
@@ -271,179 +270,7 @@ namespace EveMarketProphet.Services
             });
 
             var orderedTrips = trips.ToList();
-            orderedTrips = orderedTrips.OrderByDescending(x => x.ProfitPerJump).ToList();
-
-            var journeys = BuildJourneys(orderedTrips, solarSystemsById);
-
-            return new RouteSearchResult
-            {
-                Trips = orderedTrips,
-                Journeys = journeys
-            };
-        }
-
-        private static List<Journey> BuildJourneys(List<Trip> trips, IDictionary<int, SolarSystem> solarSystemsById)
-        {
-            const int maxLegs = 3;
-            var journeys = new List<Journey>();
-
-            if (trips == null || trips.Count == 0)
-                return journeys;
-
-            var tripsByStart = trips
-                .Where(t => t != null)
-                .GroupBy(t => t.StartSystemId)
-                .ToDictionary(g => g.Key, g => g.ToList());
-
-            var seen = new HashSet<string>();
-
-            foreach (var trip in trips)
-            {
-                if (trip == null)
-                    continue;
-
-                var path = new List<Trip> { trip };
-                ExploreJourneys(path, tripsByStart, journeys, seen, solarSystemsById, maxLegs);
-            }
-
-            return journeys
-                .OrderByDescending(j => j.ProfitPerJump)
-                .ThenByDescending(j => j.TotalProfit)
-                .ToList();
-        }
-
-        private static void ExploreJourneys(List<Trip> path,
-            IDictionary<int, List<Trip>> tripsByStart,
-            List<Journey> journeys,
-            HashSet<string> seen,
-            IDictionary<int, SolarSystem> solarSystemsById,
-            int maxLegs)
-        {
-            if (path.Count >= 2)
-            {
-                var key = string.Join("|", path.Select(p => RuntimeHelpers.GetHashCode(p)));
-                if (!seen.Contains(key))
-                {
-                    var journey = CreateJourney(path, solarSystemsById);
-                    if (journey != null)
-                    {
-                        journeys.Add(journey);
-                        seen.Add(key);
-                    }
-                }
-            }
-
-            if (path.Count >= maxLegs)
-                return;
-
-            var current = path[path.Count - 1];
-            if (!tripsByStart.TryGetValue(current.EndSystemId, out var nextOptions))
-                return;
-
-            foreach (var next in nextOptions)
-            {
-                if (path.Contains(next))
-                    continue;
-
-                var transition = GetRoute(current.EndSystemId, next.StartSystemId);
-                if (transition == null)
-                    continue;
-
-                path.Add(next);
-                ExploreJourneys(path, tripsByStart, journeys, seen, solarSystemsById, maxLegs);
-                path.RemoveAt(path.Count - 1);
-            }
-        }
-
-        private static Journey CreateJourney(IEnumerable<Trip> legs, IDictionary<int, SolarSystem> solarSystemsById)
-        {
-            var legList = legs?.ToList();
-            if (legList == null || legList.Count < 2)
-                return null;
-
-            var firstLeg = legList[0];
-
-            if (firstLeg.Waypoints == null || firstLeg.TradeWaypoints == null)
-                return null;
-
-            var aggregatedSystemIds = new List<int>();
-            var aggregatedSecurity = new List<SolarSystem>();
-            var totalJumps = 0;
-
-            AppendRoute(firstLeg.Waypoints, aggregatedSystemIds, aggregatedSecurity, solarSystemsById, ref totalJumps);
-            AppendRoute(firstLeg.TradeWaypoints, aggregatedSystemIds, aggregatedSecurity, solarSystemsById, ref totalJumps, firstLeg.TradeJumps);
-
-            for (var i = 1; i < legList.Count; i++)
-            {
-                var previous = legList[i - 1];
-                var current = legList[i];
-
-                var transition = GetRoute(previous.EndSystemId, current.StartSystemId);
-                if (transition == null)
-                    return null;
-
-                AppendRoute(transition, aggregatedSystemIds, aggregatedSecurity, solarSystemsById, ref totalJumps);
-                AppendRoute(current.TradeWaypoints, aggregatedSystemIds, aggregatedSecurity, solarSystemsById, ref totalJumps, current.TradeJumps);
-            }
-
-            var totalProfit = legList.Sum(l => l.Profit);
-            var totalCost = legList.Sum(l => l.Cost);
-            var totalWeight = legList.Sum(l => l.Weight);
-            var maxCost = legList.Max(l => l.Cost);
-            var maxWeight = legList.Max(l => l.Weight);
-            var profitPerJump = totalJumps > 0 ? totalProfit / totalJumps : totalProfit;
-
-            return new Journey
-            {
-                Legs = new List<Trip>(legList),
-                Waypoints = aggregatedSystemIds,
-                SecurityWaypoints = aggregatedSecurity,
-                TotalProfit = totalProfit,
-                TotalCost = totalCost,
-                TotalWeight = totalWeight,
-                MaxCost = maxCost,
-                MaxWeight = maxWeight,
-                TotalJumps = totalJumps,
-                ProfitPerJump = profitPerJump
-            };
-        }
-
-        private static void AppendRoute(IEnumerable<int> systemIds,
-            ICollection<int> aggregatedSystemIds,
-            ICollection<SolarSystem> aggregatedSecurity,
-            IDictionary<int, SolarSystem> solarSystemsById,
-            ref int totalJumps,
-            int? explicitJumpCount = null)
-        {
-            if (systemIds == null)
-            {
-                if (explicitJumpCount.HasValue)
-                {
-                    totalJumps += explicitJumpCount.Value;
-                }
-                return;
-            }
-
-            var ids = systemIds.ToList();
-            if (ids.Count == 0)
-            {
-                if (explicitJumpCount.HasValue)
-                {
-                    totalJumps += explicitJumpCount.Value;
-                }
-                return;
-            }
-
-            foreach (var id in ids)
-            {
-                aggregatedSystemIds.Add(id);
-                if (solarSystemsById.TryGetValue(id, out var system))
-                {
-                    aggregatedSecurity.Add(system);
-                }
-            }
-
-            totalJumps += explicitJumpCount ?? ids.Count;
+            return orderedTrips.OrderByDescending(x => x.ProfitPerJump).ToList();
         }
     }
 }
